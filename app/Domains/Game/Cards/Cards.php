@@ -12,9 +12,10 @@ class Cards
         $cards = [];
         foreach (Suit::cases() as $naipe) {
             foreach (CardEnum::cases() as $card) {
-                $cards[] = new Card($card->name, $naipe->name);
+                $cards[] = new Card($card->value, $naipe->name);
             }
         }
+
         return $cards;
     }
 }
