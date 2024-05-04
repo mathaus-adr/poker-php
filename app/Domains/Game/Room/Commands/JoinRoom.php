@@ -38,7 +38,7 @@ readonly class JoinRoom implements CommandInterface
         }
 
         $redis->set('room:'.$room->id, json_encode($currentRoom));
-        $this->commandExecutedData->pushData('room', $currentRoom);
+        $this->commandExecutedData->pushData('room', $room);
         event(new UserJoinInARoom($room, $user));
         return $this->commandExecutedData;
     }

@@ -28,7 +28,8 @@ Route::middleware('auth')->group(function () {
 
     Volt::route('confirm-password', 'pages.auth.confirm-password')
         ->name('password.confirm');
-//    Volt::route('room/{id}', 'rooms.room')->name('room');
+
+    Volt::route('room/{id}', 'pages.rooms.room')->name('room');
 
     Route::view('dashboard', 'dashboard')
         ->middleware(['auth', 'verified'])

@@ -86,13 +86,16 @@ readonly class StartPokerGame implements CommandInterface
         ];
 
         event(new GameStartedEvent($room, $data));
+
         foreach ($playerTurns as $playerCards) {
-            event(new PlayerPrivateCardsEvent($playerCards['private_cards']));
+            event(new PlayerPrivateCardsEvent($playerCards['id'], $playerCards['private_cards']));
         }
+
         $this->commandExecutedData->pushData('pot', $currentRoom['pot']);
         $this->commandExecutedData->pushData('dealer', $currentRoom['dealer']);
         $this->commandExecutedData->pushData('big_blind', $currentRoom['big_blind']);
         $this->commandExecutedData->pushData('small_blind', $currentRoom['small_blind']);
+
         return $this->commandExecutedData;
     }
 }

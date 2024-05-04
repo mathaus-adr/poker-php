@@ -15,9 +15,11 @@ new class extends Component {
 
     public function join(Room $room)
     {
-        app(\App\Domains\Game\Room\Commands\JoinRoom::class)->execute(new \App\Commands\CommandExecutionData([
+        $commandExecutedData= app(\App\Domains\Game\Room\Commands\JoinRoom::class)->execute(new \App\Commands\CommandExecutionData([
             'user' => auth()->user(), 'room' => $room
         ]));
+
+        $this->redirectIntended(default: '/room/'.$commandExecutedData->read('room')->id, navigate: true);
     }
 
     public function create()
