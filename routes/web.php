@@ -13,12 +13,12 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+//Route::view('/', 'welcome');
 
 
-Route::name('home')->get('/home', function () {
-    return view('livewire.create-user');
-});
+//Route::name('home')->get('/home', function () {
+//    return view('livewire.create-user');
+//});
 
+
+require __DIR__.'/auth.php';
