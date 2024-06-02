@@ -32,10 +32,10 @@ Route::middleware('auth')->group(function () {
     Volt::route('room/{id}', 'pages.rooms.room')->name('room');
 
     Route::view('dashboard', 'dashboard')
-        ->middleware(['auth', 'verified'])
+        ->middleware(['auth', 'verified', 'already_in_game'])
         ->name('dashboard');
 
     Route::view('profile', 'profile')
-        ->middleware(['auth'])
+        ->middleware(['auth', 'already_in_game'])
         ->name('profile');
 });

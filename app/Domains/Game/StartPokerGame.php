@@ -8,6 +8,7 @@ use App\Commands\CommandInterface;
 use App\Domains\Game\Cards\Cards;
 use App\Events\GameStartedEvent;
 use App\Events\PlayerPrivateCardsEvent;
+use App\Models\RoomUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Redis;
 
@@ -89,6 +90,7 @@ readonly class StartPokerGame implements CommandInterface
 
         foreach ($playerTurns as $playerCards) {
             event(new PlayerPrivateCardsEvent($playerCards['id'], $playerCards['private_cards']));
+            RoomUser::where(['room_id' => $room->id, 'user_id' => $playerCards['id']])->update(['user_info' => ['cards' => $playerCards['private_cards']]]);
         }
 
         $this->commandExecutedData->pushData('pot', $currentRoom['pot']);

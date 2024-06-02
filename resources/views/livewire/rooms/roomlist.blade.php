@@ -27,6 +27,7 @@ new class extends Component {
         $commandExecutedData = app(\App\Domains\Game\Room\Commands\CreateRoom::class)->execute(new \App\Commands\CommandExecutionData());
         if ($error = $commandExecutedData->read('error')) {
             $this->addError('room_created', $error);
+            return;
         }
 
         $this->redirectIntended(default: '/room/'.$commandExecutedData->read('room')->id, navigate: true);

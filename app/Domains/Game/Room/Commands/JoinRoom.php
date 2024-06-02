@@ -6,6 +6,8 @@ use App\Commands\CommandExecutedData;
 use App\Commands\CommandExecutionData;
 use App\Commands\CommandInterface;
 use App\Events\UserJoinInARoom;
+use App\Models\Room;
+use App\Models\RoomUser;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
@@ -35,11 +37,12 @@ readonly class JoinRoom implements CommandInterface
                 'name' => $user->name,
                 'cash' => 1000
             ];
+            $redis->set('room:'.$room->id, json_encode($currentRoom));
+            event(new UserJoinInARoom($room, $user));
+            RoomUser::create(['room_id' => $room->id, 'user_id' => $user->id]);
         }
 
-        $redis->set('room:'.$room->id, json_encode($currentRoom));
         $this->commandExecutedData->pushData('room', $room);
-        event(new UserJoinInARoom($room, $user));
         return $this->commandExecutedData;
     }
 }

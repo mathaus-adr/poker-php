@@ -6,6 +6,7 @@ use App\Commands\CommandExecutedData;
 use App\Commands\CommandExecutionData;
 use App\Commands\CommandInterface;
 use App\Models\Room;
+use App\Models\RoomUser;
 use Illuminate\Support\Facades\Redis;
 
 readonly class CreateRoom implements CommandInterface
@@ -20,19 +21,20 @@ readonly class CreateRoom implements CommandInterface
     #[\Override] public function execute(CommandExecutionData $data): CommandExecutedData
     {
         $user = auth()->user();
-        if(Room::where(['user_id' => $user->id])->first()) {
+        if (RoomUser::where(['user_id' => $user->id])->first()) {
             $this->commandExecutedData->pushData('error', 'Você já está em uma sala!');
             return $this->commandExecutedData;
         }
 
         $room = Room::create(['user_id' => $user->id]);
         $redis = Redis::connection()->client();
-
+        RoomUser::create(['room_id' => $room->id, 'user_id' => $user->id]);
         $userData = [
             'id' => $user->id,
             'name' => $user->name,
             'cash' => 1000
         ];
+
         $redis->set('room:'.$room->id, json_encode(['users' => [$userData]]));
 
         $this->commandExecutedData->pushData('room', $room);
