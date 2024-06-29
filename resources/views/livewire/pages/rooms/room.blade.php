@@ -23,8 +23,6 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
         $this->players = \App\Models\RoomUser::where(['room_id' => $this->room->id])
             ->where('user_id', '!=',
                 $this->player->id)->with('user')->get()->toArray();
-//        dd($this->players);
-
     }
 
     public function startGame(Room $room, \App\Domains\Game\StartPokerGame $startPokerGame): void
@@ -148,25 +146,26 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                             @endforeach
                         </div>
 
-                        <div class="flex flex-row  gap-4 absolute left-0 bottom-0">
-                            @foreach($playerCards['cards'] as $playerCard)
-                                <livewire:gamecard :type="0" :card="0"
-                                                   class=""/>
-                            @endforeach
-                        </div>
+                        {{--                        <div class="flex flex-row  gap-4 absolute left-0 bottom-0">--}}
+                        {{--                            @foreach($playerCards['cards'] as $playerCard)--}}
+                        {{--                                <livewire:gamecard :type="0" :card="0"--}}
+                        {{--                                                   class=""/>--}}
+                        {{--                            @endforeach--}}
+                        {{--                        </div>--}}
 
                         <div
-                            class="flex flex-row  gap-4 absolute right-0 top-1/2 -translate-y-24 transform-gpu"> @foreach($playerCards['cards'] as $playerCard)
+                            class="flex flex-row  gap-4 absolute right-0 top-1/2 -translate-y-24 transform-gpu">
+                            @foreach($playerCards['cards'] as $playerCard)
                                 <livewire:gamecard :type="0" :card="0"
                                                    class=""/>
                             @endforeach</div>
 
-                        <div class="flex flex-row gap-4 absolute right-0 bottom-0">
-                            @foreach($playerCards['cards'] as $playerCard)
-                                <livewire:gamecard :type="0" :card="0"
-                                                   class=""/>
-                            @endforeach
-                        </div>
+                        {{--                        <div class="flex flex-row gap-4 absolute right-0 bottom-0">--}}
+                        {{--                            @foreach($playerCards['cards'] as $playerCard)--}}
+                        {{--                                <livewire:gamecard :type="0" :card="0"--}}
+                        {{--                                                   class=""/>--}}
+                        {{--                            @endforeach--}}
+                        {{--                        </div>--}}
 
                         <div class="absolute bottom-0 left-1/2 -translate-x-24 transform-gpu">
                             <div class="flex flex-row gap-4">
@@ -175,16 +174,29 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                                        class="shadow-lg shadow-inner"/>
                                 @endforeach
                             </div>
-                            <div class="mb-1 mt-1 w-80 text-justify text-center">
-                                {{Str::of(auth()->user()->name)->before(' ') }} 1000 $
+                            <div class="flex flex-row mb-1 mt-1 w-80 text-justify text-center">
+                                <div class="self-center pr-3">
+                                    1000
+                                </div>
+                                <div class="avatar">
+                                    <div
+                                        class="w-16 h-16 content-center text-center rounded-full shrink-0 bg-gray-300 ring ring-gray-300 ring-offset-base-100 ring-offset-2">
+                                        <span
+                                            class="text-xl text-black font-extrabold">{{Str::of(auth()->user()->name)->before(' ')->ucfirst()[0]}}</span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-row w-60 h-12 content-center self-center bg-primary rounded-full -translate-x-4">
+                                    <div class="self-center pl-3">
+                                        {{Str::of(auth()->user()->name)->before(' ') }}
+                                    </div>
+                                    <div class="self-center pl-3">
+                                        1000 $
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                {{--                <div class="col-span-2 bg-gray-800 border-gray-400 border rounded-xl ">--}}
-
-
-                {{--                </div>--}}
             </div>
         </div>
     </div>
