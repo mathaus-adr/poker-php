@@ -6,11 +6,17 @@ use App\Domains\Game\Cards\Enums\Suit;
 new class extends \Livewire\Volt\Component {
     public $card;
     public $type;
+    public ?string $fillColor;
+    public ?string $textColor;
 
     public function mount(?int $card, ?string $type)
     {
         $this->card = $card;
         $this->type = $type;
+        if ($type && $card) {
+            $this->fillColor = in_array(Suit::get($type), ['heart', 'diamond']) ? 'fill-red-800' : 'fill-black';
+            $this->textColor = in_array(Suit::get($type), ['heart', 'diamond']) ? 'text-red-800' : 'text-black';
+        }
     }
 
 
@@ -19,26 +25,19 @@ new class extends \Livewire\Volt\Component {
 ?>
 
 <div>
-    {{--    {{svg('gameicon-card-'. Card::get($card). '-'. Suit::get($type), 'w-40 fill-gray-800 text-red-800')}}--}}
     @if($card && $type)
-        <div class="grid grid-rows-5 w-28 h-40 border-gray-400 border rounded-lg">
+        <div class="grid grid-rows-5 w-28 h-40 border-gray-400 border rounded-lg bg-white">
             <div
-                class="row-span-1 place-self-start pt-2 pl-2 fill-red-400">{{svg('mdi-cards-'. Suit::get($type), 'w-6 fill-red-400')}}</div>
-            <div class="row-span-3 place-self-center text-2xl uppercase">{{Card::get($card)}}</div>
+                    class="row-span-1 place-self-start pt-2 pl-2 fill-red-400">{{svg('mdi-cards-'. Suit::get($type), 'w-6 ' . $fillColor)}}</div>
+            <div class="row-span-3 place-self-center text-2xl uppercase font-bold {{$textColor}}">{{Card::get($card)}}</div>
             <div
-                class="row-span-1 place-self-end pb-2 pr-2">{{svg('mdi-cards-'. Suit::get($type), 'w-6 fill-red-400')}}</div>
+                    class="row-span-1 place-self-end pb-2 pr-2">{{svg('mdi-cards-'. Suit::get($type), 'w-6 ' . $fillColor)}}</div>
         </div>
     @endif
 
     @if(!$card && !$type)
-        <div class="grid grid-rows-5 w-28 h-40 border-gray-400 border rounded-lg">
-            <div
-                class="row-span-1 place-self-center">{{svg('mdi-cards-spade', 'w-7 fill-red-400 origin-center rotate-90')}}</div>
-            <div
-                class="row-span-3 place-self-center text-2xl uppercase">{{svg('mdi-cards-diamond', 'w-7 fill-red-400 origin-center rotate-180')}}
-                ? {{svg('mdi-cards-club', 'w-7 fill-red-400 origin-center rotate-270')}}</div>
-            <div
-                class="row-span-1 place-self-center">{{svg('mdi-cards-heart', 'w-7 fill-red-400 origin-center rotate-180')}}</div>
+        <div class="bg-center w-28 h-40 border rounded-lg border-red-800 border-4 outline outline-offset-0 outline-1 outline-white bg-contain bg-white bg-origin-padding p-1" style="background-image: url('/new-back-card.png'); background-size: 7rem 10rem;">
+
         </div>
     @endif
 </div>

@@ -1,6 +1,10 @@
 <?php
 
+use App\Http\Controllers\BetController;
+use App\Http\Controllers\CheckController;
+use App\Http\Controllers\FoldController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\PayController;
 use App\Http\Controllers\RoomController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -26,4 +30,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('rooms', [RoomController::class, 'create']);
     Route::put('rooms/{id}/join', [RoomController::class, 'join']);
     Route::post('rooms/{id}/start', [RoomController::class, 'startGame']);
+    Route::post('rooms/{id}/leave', [RoomController::class, 'leave']);
+    Route::post('rooms/{id}/bet', [BetController::class, 'bet']);
+    Route::post('rooms/{id}/fold', [FoldController::class, 'fold']);
+    Route::post('rooms/{id}/check', [CheckController::class, 'check']);
+    Route::post('rooms/{id}/call', [PayController::class, 'call']);
 });

@@ -32,6 +32,8 @@ readonly class StartPokerGame implements CommandInterface
             $player['private_cards'] = [];
             $player['private_cards'][] = array_shift($currentRoom['cards']);
             $player['private_cards'][] = array_shift($currentRoom['cards']);
+            $player['playing_round'] = true;
+            $player ['total_round_bet'] = 0;
         }
 
         $currentRoom['flop'] = [];
@@ -50,11 +52,11 @@ readonly class StartPokerGame implements CommandInterface
         $currentRoom['small_blind'] = $playerTurns->first();
 
         $currentRoom['config'] = [];
-        $currentRoom['config']['big_blind_amount'] = 10;
-        $currentRoom['config']['small_blind_amount'] = 5;
+        $currentRoom['big_blind']['total_round_bet'] = $currentRoom['config']['big_blind_amount'] = 10;
+        $currentRoom['small_blind']['total_round_bet'] = $currentRoom['config']['small_blind_amount'] = 5;
 
-        $currentRoom['big_blind']['cash'] -= $currentRoom['config']['big_blind_amount'];
-        $currentRoom['small_blind']['cash'] -= $currentRoom['config']['small_blind_amount'];
+        $currentRoom['big_blind']['cash'] -= $currentRoom['big_blind']['total_round_bet'];
+        $currentRoom['small_blind']['cash'] -= $currentRoom['small_blind']['total_round_bet'];
         $currentRoom['current_turn'] = $currentRoom['small_blind'];
 
         $playerTurns = $playerTurns->replace([
@@ -67,8 +69,6 @@ readonly class StartPokerGame implements CommandInterface
         $redis->set('room:'.$room->id, json_encode($currentRoom));
         $redis->close();
 
-        //TODO send public event to all players that game begins evento com total do pot, dealers e quem é big blind e small blind
-        //TODO send private event to all player with their private cards
         $data = [
             'total_pot' => $currentRoom['pot'],
             'player_bets' => [
@@ -83,14 +83,18 @@ readonly class StartPokerGame implements CommandInterface
             ],
             'players' => $playerTurns->toArray(),
             'current_bet_amount_to_join' => $currentRoom['config']['big_blind_amount'],
-            'first_to_bet' => $playerTurns->first(),
+            'current_player_to_bet' => $playerTurns->first(),
         ];
+        $room->data = $data;
+        $room->save();
 
         event(new GameStartedEvent($room, $data));
 
         foreach ($playerTurns as $playerCards) {
             event(new PlayerPrivateCardsEvent($playerCards['id'], $playerCards['private_cards']));
-            RoomUser::where(['room_id' => $room->id, 'user_id' => $playerCards['id']])->update(['user_info' => ['cards' => $playerCards['private_cards']]]);
+            RoomUser::where([
+                'room_id' => $room->id, 'user_id' => $playerCards['id']
+            ])->update(['user_info' => ['cards' => $playerCards['private_cards']]]);
         }
 
         $this->commandExecutedData->pushData('pot', $currentRoom['pot']);

@@ -13,6 +13,10 @@ class Room extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'data' => 'array'
+    ];
+
     protected function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
