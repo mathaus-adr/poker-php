@@ -85,16 +85,17 @@ readonly class StartPokerGame implements CommandInterface
             'current_bet_amount_to_join' => $currentRoom['config']['big_blind_amount'],
             'current_player_to_bet' => $playerTurns->first(),
         ];
+
         $room->data = $data;
         $room->save();
 
-        event(new GameStartedEvent($room, $data));
+//        event(new GameStartedEvent($room, $data));
 
         foreach ($playerTurns as $playerCards) {
-            event(new PlayerPrivateCardsEvent($playerCards['id'], $playerCards['private_cards']));
             RoomUser::where([
                 'room_id' => $room->id, 'user_id' => $playerCards['id']
             ])->update(['user_info' => ['cards' => $playerCards['private_cards']]]);
+//            event(new PlayerPrivateCardsEvent($playerCards['id'], $playerCards['private_cards']));
         }
 
         $this->commandExecutedData->pushData('pot', $currentRoom['pot']);
