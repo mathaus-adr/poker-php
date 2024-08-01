@@ -9,10 +9,12 @@ class Fold
 {
     public function fold(CommandExecutionData $data): void
     {
+        return;
         $room = Room::findOrFail($data->read('room')->id);
         $isCorrectPlayerToMakeAnAction = $room->data['current_player_to_bet']['id'] === $data->read('player')->id;
-        dd($isCorrectPlayerToMakeAnAction);
+//        dd($isCorrectPlayerToMakeAnAction);
         if (!$isCorrectPlayerToMakeAnAction) {
+            return;
 //            return response()->json(['message' => 'It is not your turn to make an action'], 422);
         }
 

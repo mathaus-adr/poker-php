@@ -35,6 +35,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
     {
         $commandExecutedData = $startPokerGame->execute(new \App\Commands\CommandExecutionData(['room' => $this->room]));
     }
+
     public function fold(Room $room, \App\Domains\Game\Actions\Fold $fold): void
     {
         $fold->fold(new \App\Commands\CommandExecutionData(['room' => $this->room, 'player' => $this->player]));
@@ -72,15 +73,15 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
             <div class="grid grid-cols-12 gap-1">
                 <div class="col-span-12 rounded-xl">
 
-                    <div class="relative bg-gray-800 h-screen w-full rounded-lg" wire:model="room">
+                    <div class="relative bg-gray-800 h-screen w-full rounded-lg">
 
                         @foreach($otherPlayers as $index => $otherPlayer)
                             <div class="absolute {{$otherPlayersPositions[$index]}}">
                                 <div class="flex flex-row gap-4">
-                                    @foreach($playerCards['cards'] as $playerCard)
                                         <livewire:gamecard :type="0" :card="0"
-                                                           class=""/>
-                                    @endforeach
+                                                           class="" wire:key="{{$otherPlayer['id'].$index. '1'}}"/>
+                                        <livewire:gamecard :type="0" :card="0"
+                                                           class="" wire:key="{{$otherPlayer['id'].$index. '2'}}"/>
                                 </div>
                                 <div class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 {{isset($this->room->data['current_player_to_bet']) && $this->room->data['current_player_to_bet']['id'] === $otherPlayer['id'] ? 'animate-pulse': ''}}">
                                     <div class="self-center bg-gray-600 translate-x-1 w-20 rounded-l-lg h-8 content-center text-center text-black">
@@ -129,7 +130,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                 @foreach($playerCards['cards'] as $playerCard)
 
                                     <livewire:gamecard :type="$playerCard['naipe']" :card="$playerCard['carta']"
-                                                       class="shadow-lg shadow-inner"/>
+                                                       class="shadow-lg shadow-inner" wire:key="{{$playerCard['naipe'].$playerCard['carta']}}"/>
                                 @endforeach
                             </div>
                             <div class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24">
@@ -141,9 +142,6 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                             class="w-16 h-16 content-center text-center rounded-full shrink-0 bg-gray-600 ring ring-gray-600 ring-offset-base-100 ring-offset-2">
                                         <span
                                                 class="text-xl font-extrabold">{{Str::of(auth()->user()->name)->before(' ')->ucfirst()[0]}}</span>
-                                        {{--                                        <span class="countdown">--}}
-                                        {{--                                            <span style="--value:${counter};"></span>--}}
-                                        {{--                                        </span>--}}
                                     </div>
                                 </div>
                                 <div
@@ -157,32 +155,32 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                 </div>
                             </div>
                         </div>
-                        <div class="absolute bottom-0 left-0">
-                            <div class="chat chat-start">
-                                <div class="chat-image avatar">
-                                    <div
-                                            class="w-10 content-center text-center rounded-full shrink-0 bg-gray-300 ring ring-gray-300 ring-offset-base-100 ring-offset-2">
-                                        <span
-                                                class="text-xl text-black font-extrabold">{{Str::of(auth()->user()->name)->before(' ')->ucfirst()[0]}}</span>
-                                    </div>
-                                </div>
-                                <div class="chat-header">
-                                    {{auth()->user()->name}}
-                                </div>
-                                <div class="chat-bubble"> teste de mensagem</div>
-                            </div>
+{{--                        <div class="absolute bottom-0 left-0">--}}
+{{--                            <div class="chat chat-start">--}}
+{{--                                <div class="chat-image avatar">--}}
+{{--                                    <div--}}
+{{--                                            class="w-10 content-center text-center rounded-full shrink-0 bg-gray-300 ring ring-gray-300 ring-offset-base-100 ring-offset-2">--}}
+{{--                                        <span--}}
+{{--                                                class="text-xl text-black font-extrabold">{{Str::of(auth()->user()->name)->before(' ')->ucfirst()[0]}}</span>--}}
+{{--                                    </div>--}}
+{{--                                </div>--}}
+{{--                                <div class="chat-header">--}}
+{{--                                    {{auth()->user()->name}}--}}
+{{--                                </div>--}}
+{{--                                <div class="chat-bubble"> teste de mensagem</div>--}}
+{{--                            </div>--}}
 
-                        </div>
+{{--                        </div>--}}
                         <div class="absolute bottom-0 right-0 m-5">
                             <div class="flex flex-row mb-5">
                                 <button class="btn btn-success" wire:click="startGame">Começar a partida</button>
                             </div>
                             <div class="flex flex-row gap-4">
-                                <button class="btn animate-bounce">Pagar</button>
-                                <button class="btn animate-bounce">Check</button>
+{{--                                <button class="btn animate-bounce">Pagar</button>--}}
+{{--                                <button class="btn animate-bounce">Check</button>--}}
                                 <button class="btn animate-bounce" wire:click="fold">Fold</button>
-                                <button class="btn animate-bounce">All in</button>
-                                <button class="btn animate-bounce">Raise</button>
+{{--                                <button class="btn animate-bounce">All in</button>--}}
+{{--                                <button class="btn animate-bounce">Raise</button>--}}
                             </div>
                         </div>
                     </div>
