@@ -34,16 +34,18 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
     public function startGame(Room $room, \App\Domains\Game\StartPokerGame $startPokerGame): void
     {
         $commandExecutedData = $startPokerGame->execute(new \App\Commands\CommandExecutionData(['room' => $this->room]));
+        $this->loadRoomData();
     }
 
     public function fold(Room $room, \App\Domains\Game\Actions\Fold $fold): void
     {
         $fold->fold(new \App\Commands\CommandExecutionData(['room' => $this->room, 'player' => $this->player]));
     }
+
     public function getListeners()
     {
         return [
-            'echo-private:player-'.$this->player->id.',PlayerPrivateCardsEvent' => 'handlePlayerEvent'
+//            'echo-private:player-'.$this->player->id.',PlayerPrivateCardsEvent' => 'handlePlayerEvent'
         ];
     }
 
@@ -73,7 +75,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
             <div class="grid grid-cols-12 gap-1">
                 <div class="col-span-12 rounded-xl">
 
-                    <div class="relative bg-gray-800 h-screen w-full rounded-lg">
+                    <div class="relative bg-green-800 h-screen w-full rounded-lg">
 
                         @foreach($otherPlayers as $index => $otherPlayer)
                             <div class="absolute {{$otherPlayersPositions[$index]}}">
@@ -83,19 +85,19 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                         <livewire:gamecard :type="0" :card="0"
                                                            class="" wire:key="{{$otherPlayer['id'].$index. '2'}}"/>
                                 </div>
-                                <div class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 {{isset($this->room->data['current_player_to_bet']) && $this->room->data['current_player_to_bet']['id'] === $otherPlayer['id'] ? 'animate-pulse': ''}}">
-                                    <div class="self-center bg-gray-600 translate-x-1 w-20 rounded-l-lg h-8 content-center text-center text-black">
+                                <div class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{isset($this->room->data['current_player_to_bet']) && $this->room->data['current_player_to_bet']['id'] === $otherPlayer['id'] ? 'animate-pulse': ''}}">
+                                    <div class="self-center bg-white translate-x-1 w-20 rounded-l-lg h-8 content-center text-center">
                                         {{$otherPlayer['total_round_bet']}}
                                     </div>
-                                    <div class="avatar translate-x-1">
+                                    <div class="avatar translate-x-1 ">
                                         <div
-                                                class="w-16 h-16 content-center text-center rounded-full shrink-0 bg-gray-600 ring ring-gray-600 ring-offset-base-100 ring-offset-2">
+                                                class="w-16 h-16 content-center text-center rounded-full shrink-0 bg-white ring ring-white ring-offset-base-100 ring-offset-2">
                                         <span
-                                                class="text-xl font-extrabold">{{Str::of($otherPlayer['name'])->before(' ')->ucfirst()[0]}}</span>
+                                                class="text-xl ">{{Str::of($otherPlayer['name'])->before(' ')->ucfirst()[0]}}</span>
                                         </div>
                                     </div>
                                     <div
-                                            class="flex flex-row w-60 h-12 content-center self-center bg-gray-600 rounded-r-lg">
+                                            class="flex flex-row w-60 h-12 content-center self-center bg-white rounded-r-lg">
                                         <div class="self-center pl-3">
                                             {{Str::of($otherPlayer['name'])->before(' ') }}
                                         </div>
@@ -133,19 +135,19 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                                        class="shadow-lg shadow-inner" wire:key="{{$playerCard['naipe'].$playerCard['carta']}}"/>
                                 @endforeach
                             </div>
-                            <div class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24">
-                                <div class="self-center pr-3">
+                            <div class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold">
+                                <div class="self-center bg-white translate-x-1 w-20 rounded-l-lg h-8 content-center text-center">
                                     1000
                                 </div>
                                 <div class="avatar translate-x-1">
                                     <div
-                                            class="w-16 h-16 content-center text-center rounded-full shrink-0 bg-gray-600 ring ring-gray-600 ring-offset-base-100 ring-offset-2">
+                                            class="w-16 h-16 content-center text-center rounded-full shrink-0 bg-white ring ring-white ring-offset-base-100 ring-offset-2 ">
                                         <span
                                                 class="text-xl font-extrabold">{{Str::of(auth()->user()->name)->before(' ')->ucfirst()[0]}}</span>
                                     </div>
                                 </div>
                                 <div
-                                        class="flex flex-row w-60 h-12 content-center self-center bg-gray-600 rounded-r-lg">
+                                        class="flex flex-row w-60 h-12 content-center self-center bg-white rounded-r-lg">
                                     <div class="self-center pl-3">
                                         {{Str::of(auth()->user()->name)->before(' ') }}
                                     </div>
