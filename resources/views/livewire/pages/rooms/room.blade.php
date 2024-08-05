@@ -51,7 +51,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
     public function getListeners()
     {
         return [
-            'echo-private:player-'.$this->player->id.',GameStatusUpdated' => 'handlePlayerEvent',
+//            'echo-private:player-'.$this->player->id.',GameStatusUpdated' => 'handlePlayerEvent',
             'echo-private:room-' . $this->room->id . ',GameStatusUpdated' => 'handlePlayerEvent'
         ];
     }
@@ -159,7 +159,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
 
                                 @endif
                             </div>
-                            <div class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{isset($playerInfo['playing_round']) && $playerInfo['playing_round'] ? 'animate-pulse': ''}} {{$playerInfo ? '': 'opacity-20'}}">
+                            <div class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{isset($this->room->data['current_player_to_bet']) && $this->room->data['current_player_to_bet']['id'] === $playerInfo['id'] ? 'animate-pulse': ''}} {{$playerInfo ? '': 'opacity-20'}}">
                                 <div class="self-center bg-white translate-x-1 w-20 rounded-l-lg h-8 content-center text-center">
                                     {{$playerInfo['total_round_bet'] ?? 0}}
                                 </div>
