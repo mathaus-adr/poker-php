@@ -95,7 +95,7 @@ readonly class StartPokerGame implements CommandInterface
             RoomUser::where([
                 'room_id' => $room->id, 'user_id' => $playerCards['id']
             ])->update(['user_info' => ['cards' => $playerCards['private_cards']]]);
-//            event(new PlayerPrivateCardsEvent($playerCards['id'], $playerCards['private_cards']));
+            event(new PlayerPrivateCardsEvent($playerCards['id'], $playerCards['private_cards']));
         }
 
         $this->commandExecutedData->pushData('pot', $currentRoom['pot']);

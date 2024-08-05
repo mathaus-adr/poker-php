@@ -9,7 +9,7 @@ class Fold
 {
     public function fold(CommandExecutionData $data): void
     {
-        return;
+//        return;
         $room = Room::findOrFail($data->read('room')->id);
         $isCorrectPlayerToMakeAnAction = $room->data['current_player_to_bet']['id'] === $data->read('player')->id;
 //        dd($isCorrectPlayerToMakeAnAction);

@@ -26,7 +26,7 @@ new class extends \Livewire\Volt\Component {
 
 <div>
     @if($card && $type)
-        <div class="grid grid-rows-5 w-28 h-40 border-black border-2 border rounded-lg bg-white">
+        <div class="grid grid-rows-5 w-28 h-40 md:w-20 md:h-28 border-black border-2 border rounded-lg bg-white">
             <div
                     class="row-span-1 place-self-start pt-2 pl-2 fill-red-400">{{svg('mdi-cards-'. Suit::get($type), 'w-6 ' . $fillColor)}}</div>
             <div class="row-span-3 place-self-center text-2xl uppercase font-bold {{$textColor}}">{{Card::get($card)}}</div>
@@ -36,7 +36,7 @@ new class extends \Livewire\Volt\Component {
     @endif
 
     @if(!$card && !$type)
-        <div class="bg-center w-28 h-40 border rounded-lg border-red-800 border-4 outline outline-offset-0 outline-1 outline-white bg-contain bg-white bg-origin-padding p-1" style="background-image: url('/new-back-card.png'); background-size: 7rem 10rem;">
+        <div class="bg-center w-28 h-40 md:w-20 md:h-28 border rounded-lg border-red-800 border-4 outline outline-offset-0 outline-1 outline-white bg-contain bg-white bg-origin-padding p-1" style="background-image: url('/new-back-card.png'); background-size: 7rem 10rem;">
 
         </div>
     @endif
