@@ -6,10 +6,8 @@ use App\Commands\CommandExecutedData;
 use App\Commands\CommandExecutionData;
 use App\Commands\CommandInterface;
 use App\Domains\Game\Cards\Cards;
-use App\Events\GameStartedEvent;
-use App\Events\PlayerPrivateCardsEvent;
+use App\Events\GameStatusUpdated;
 use App\Models\RoomUser;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Redis;
 
 readonly class StartPokerGame implements CommandInterface
@@ -22,7 +20,8 @@ readonly class StartPokerGame implements CommandInterface
     {
         $room = $data->read('room');
         $redis = Redis::connection()->client();
-        $currentRoom = json_decode($redis->get('room:'.$room->id), true);
+        $currentRoom = json_decode($redis->get('room:' . $room->id), true);
+
         $gameCards = Cards::getCards();
         $currentRoom['round_started'] = true;
         $currentRoom['cards'] = collect($gameCards)->shuffle()->toArray();
@@ -33,7 +32,7 @@ readonly class StartPokerGame implements CommandInterface
             $player['private_cards'][] = array_shift($currentRoom['cards']);
             $player['private_cards'][] = array_shift($currentRoom['cards']);
             $player['playing_round'] = true;
-            $player ['total_round_bet'] = 0;
+            $player['total_round_bet'] = 0;
         }
 
         $currentRoom['flop'] = [];
@@ -60,13 +59,14 @@ readonly class StartPokerGame implements CommandInterface
         $currentRoom['current_turn'] = $currentRoom['small_blind'];
 
         $playerTurns = $playerTurns->replace([
-            0 => $currentRoom['small_blind'], ($playerTurns->count() - 1) => $currentRoom['big_blind']
+            0 => $currentRoom['small_blind'],
+            ($playerTurns->count() - 1) => $currentRoom['big_blind']
         ]);
 
         $currentRoom['players_actions'] = $playerTurns;
 
         $currentRoom['pot'] = $currentRoom['config']['big_blind_amount'] + $currentRoom['config']['small_blind_amount'];
-        $redis->set('room:'.$room->id, json_encode($currentRoom));
+        $redis->set('room:' . $room->id, json_encode($currentRoom));
         $redis->close();
 
         $data = [
@@ -89,20 +89,18 @@ readonly class StartPokerGame implements CommandInterface
         $room->data = $data;
         $room->save();
 
-//        event(new GameStartedEvent($room, $data));
-
         foreach ($playerTurns as $playerCards) {
             RoomUser::where([
-                'room_id' => $room->id, 'user_id' => $playerCards['id']
+                'room_id' => $room->id,
+                'user_id' => $playerCards['id']
             ])->update(['user_info' => ['cards' => $playerCards['private_cards']]]);
-            event(new PlayerPrivateCardsEvent($playerCards['id'], $playerCards['private_cards']));
         }
 
         $this->commandExecutedData->pushData('pot', $currentRoom['pot']);
         $this->commandExecutedData->pushData('dealer', $currentRoom['dealer']);
         $this->commandExecutedData->pushData('big_blind', $currentRoom['big_blind']);
         $this->commandExecutedData->pushData('small_blind', $currentRoom['small_blind']);
-
+        event(new GameStatusUpdated($room->id));
         return $this->commandExecutedData;
     }
 }

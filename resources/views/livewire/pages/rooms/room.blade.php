@@ -15,9 +15,12 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
     public ?array $otherPlayers;
     public ?array $playerInfo;
     public ?array $playerActions;
+    public ?array $flop;
+    public ?array $turn;
+    public ?array $river;
 
     public array $otherPlayersPositions = [
-        'left-0 top-0 translate-x-32 mt-5', //top left
+        'left-0 top-0 translate-x-32 mt-5 md:translate-x-24', //top left
         'left-0 top-1/2 -translate-y-24 transform-gpu md:translate-x-24', //middle left
         'right-0 top-0 mt-5 mr-5 md:translate-x-24',//top right
         'top-0 left-1/2 -translate-x-24 transform-gpu', //top middle
@@ -39,29 +42,22 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
         $commandExecutedData = $startPokerGame->execute(
             new \App\Commands\CommandExecutionData(['room' => $this->room])
         );
-        $this->loadRoomData();
     }
 
-    public function fold(Room $room, \App\Domains\Game\Actions\Fold $fold): void
-    {
-        $fold->fold(new \App\Commands\CommandExecutionData(['room' => $this->room, 'player' => $this->player]));
-        $this->loadRoomData();
-    }
 
-    public function getListeners()
+    public function getListeners(): array
     {
         return [
-//            'echo-private:player-'.$this->player->id.',GameStatusUpdated' => 'handlePlayerEvent',
-            'echo-private:room-' . $this->room->id . ',GameStatusUpdated' => 'handlePlayerEvent'
+            'echo-private:room-' . $this->room->id . ',GameStatusUpdated' => 'handleRoomEvent'
         ];
     }
 
-    public function handlePlayerEvent($event)
+    public function handleRoomEvent($event): void
     {
         $this->loadRoomData();
     }
 
-    private function loadRoomData()
+    private function loadRoomData(): void
     {
         $this->room->refresh();
         if ($this->room->data !== null) {
@@ -76,14 +72,23 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
             $this->playerActions = app(\App\Domains\Game\Rules\GetPlayerPossibleActions::class)->getActionsForPlayer(
                 $this->room
             );
+
+            $this->flop = $this->room->data['flop'] ?? null;
+            $this->turn = $this->room->data['turn'] ?? null;
+            $this->river = $this->room->data['river'] ?? null;
         }
     }
 
     public function pagar(\App\Domains\Game\Actions\Pay $pay): void
     {
         $pay->execute($this->room, auth()->user());
-//        $this->loadRoomData();
     }
+
+    public function fold(Room $room, \App\Domains\Game\Actions\Fold $fold): void
+    {
+        $fold->fold(new \App\Commands\CommandExecutionData(['room' => $this->room, 'player' => $this->player]));
+    }
+
 };
 
 ?>
@@ -132,16 +137,34 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                         <div
                                 class="absolute top-1/2 right-1/2 -translate-y-24 translate-x-72 md:translate-x-52 transform-gpu">
                             <div class="flex flex-row gap-4 ">
-                                <livewire:gamecard :type="'0'" :card="0"
-                                                   class=""/>
-                                <livewire:gamecard :type="'0'" :card="0"
-                                                   class=""/>
-                                <livewire:gamecard :type="'0'" :card="0"
-                                                   class=""/>
-                                <livewire:gamecard :type="'0'" :card="0"
-                                                   class=""/>
-                                <livewire:gamecard :type="'0'" :card="0"
-                                                   class=""/>
+                                @if(!$flop)
+                                    <livewire:gamecard :type="'0'" :card="0"
+                                                       class=""/>
+                                    <livewire:gamecard :type="'0'" :card="0"
+                                                       class=""/>
+                                    <livewire:gamecard :type="'0'" :card="0"
+                                                       class=""/>
+                                @else
+                                    @foreach($flop as $card)
+                                        <livewire:gamecard :type="$card['naipe']" :card="$card['carta']"
+                                                           class="" wire:key="{{$card['naipe'].$card['carta']}}"/>
+                                    @endforeach
+                                @endif
+                                @if(!$turn)
+                                    <livewire:gamecard :type="'0'" :card="0"
+                                                       class=""/>
+                                @else
+                                    <livewire:gamecard :type="$turn[0]['naipe']" :card="$turn[0]['carta']" class=""
+                                                       :wire:key="$turn[0]['naipe'].$turn[0]['carta']"/>
+                                @endif
+                                @if(!$river)
+                                    <livewire:gamecard :type="'0'" :card="0"
+                                                       class=""/>
+                                @else
+                                    <livewire:gamecard :type="$river[0]['naipe']" :card="$river[0]['carta']" class=""
+                                                       :wire:key="$river[0]['naipe'].$river[0]['carta']"/>
+                                @endif
+
                             </div>
                             <div class="text-center bg-white mt-4 w-24 absolute rounded-lg left-1/2 text-black h-6">{{$room->data['total_pot'] ?? 0}}</div>
                         </div>
@@ -159,7 +182,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
 
                                 @endif
                             </div>
-                            <div class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{isset($this->room->data['current_player_to_bet']) && $this->room->data['current_player_to_bet']['id'] === $playerInfo['id'] ? 'animate-pulse': ''}} {{$playerInfo ? '': 'opacity-20'}}">
+                            <div class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{isset($this->room->data['current_player_to_bet']) && $this->room->data['current_player_to_bet']['id'] === $playerInfo ?? $playerInfo['id'] ? 'animate-pulse': ''}} {{$playerInfo ? '': 'opacity-20'}}">
                                 <div class="self-center bg-white translate-x-1 w-20 rounded-l-lg h-8 content-center text-center">
                                     {{$playerInfo['total_round_bet'] ?? 0}}
                                 </div>
@@ -189,10 +212,6 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                 @if($playerActions)
                                     @foreach($playerActions as $action)
                                         <button class="btn" wire:click="{{$action}}">{{ucfirst($action)}}</button>
-                                        {{--                                    <button class="btn">Check</button>--}}
-                                        {{--                                    <button class="btn" wire:click="fold">Fold</button>--}}
-                                        {{--                                    <button class="btn">All in</button>--}}
-                                        {{--                                    <button class="btn">Raise</button>--}}
                                     @endforeach
                                 @endif
                             </div>
