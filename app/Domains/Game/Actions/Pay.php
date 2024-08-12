@@ -6,19 +6,13 @@ use App\Events\GameStatusUpdated;
 use App\Models\Room;
 use App\Models\User;
 
-class Pay
+class Pay extends PlayerActionsAbstract
 {
-    public function execute(Room $room, User $user): void
+    public function executeAction(Room $room, User $user): void
     {
         $roomData = $room->data;
-        $playerInfo = collect($roomData['players'])->firstWhere('id', $user->id);
-
-        $isCorrectPlayerToMakeAnAction = $roomData['current_player_to_bet']['id'] === $user->id;
-
-        if (!$isCorrectPlayerToMakeAnAction) {
-            return;
-        }
-
+        $playersCollection = collect($roomData['players']);
+        $playerInfo = $playersCollection->firstWhere('id', $user->id);
         $totalCashToPay = $roomData['current_bet_amount_to_join'] - $playerInfo['total_round_bet'];
 
         $playerInfo['total_round_bet'] += $totalCashToPay;
@@ -29,12 +23,8 @@ class Pay
             'bet_amount' => $totalCashToPay
         ];
 
-        array_shift($roomData['players']);
-        $roomData['current_player_to_bet'] = $roomData['players'][0];
-        $roomData['players'][] = $playerInfo;
+        $roomData['players'] = $playersCollection->replace([0 => $playerInfo])->toArray();
         $room->data = $roomData;
         $room->save();
-
-        event(new GameStatusUpdated($room->id));
     }
 }
