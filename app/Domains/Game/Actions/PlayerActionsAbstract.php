@@ -18,6 +18,7 @@ abstract class PlayerActionsAbstract implements PlayerActionInterface
 
     private function isPlayerTurn(Room $room, User $user): bool
     {
+        dd($room->data['current_player_to_bet']['id']);
         return $room->data['current_player_to_bet']['id'] === $user->id;
     }
 
@@ -27,10 +28,7 @@ abstract class PlayerActionsAbstract implements PlayerActionInterface
             return false;
         }
 
-        //TODO unset na chave redis de tempo de espera
-        Cache::store('redis')->delete('room:' . $room->id . ':player:' . $user->id . ':waiting');
-
-
+        Cache::store('redis')->delete('room:'.$room->id.':player:'.$user->id.':waiting');
         return true;
     }
 
@@ -57,7 +55,7 @@ abstract class PlayerActionsAbstract implements PlayerActionInterface
 
     private function dispatchUserTurnJob(Room $room, int $userId): void
     {
-        $cacheKey = 'room:' . $room->id . ':player:' . $userId . ':waiting';
+        $cacheKey = 'room:'.$room->id.':player:'.$userId.':waiting';
         dispatch(new PlayerTurnJob($cacheKey));
     }
 }

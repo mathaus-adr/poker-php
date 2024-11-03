@@ -12,7 +12,7 @@ class RoomController extends Controller
 {
     public function create(CreateRoom $createRoom)
     {
-        return $createRoom->execute(new CommandExecutionData)->getData()['room'];
+        return $createRoom->execute()->getData()['room'];
     }
 
     /**

@@ -7,38 +7,36 @@ use App\Commands\CommandExecutionData;
 use App\Commands\CommandInterface;
 use App\Models\Room;
 use App\Models\RoomUser;
+use Exception;
 use Illuminate\Support\Facades\Redis;
 
-readonly class CreateRoom implements CommandInterface
+readonly class CreateRoom
 {
-    public function __construct(private CommandExecutedData $commandExecutedData)
+    public function __construct()
     {
     }
 
     /**
-     * @throws \RedisException
+     * @throws Exception
      */
-    #[\Override] public function execute(CommandExecutionData $data): CommandExecutedData
+    public function execute(): Room
     {
         $user = auth()->user();
+
         if (RoomUser::where(['user_id' => $user->id])->first()) {
-            $this->commandExecutedData->pushData('error', 'Você já está em uma sala!');
-            return $this->commandExecutedData;
+            throw new Exception('User already in a room');
         }
 
-        $room = Room::create(['user_id' => $user->id]);
-        $redis = Redis::connection()->client();
-        RoomUser::create(['room_id' => $room->id, 'user_id' => $user->id]);
+
+
         $userData = [
             'id' => $user->id,
             'name' => $user->name,
             'cash' => 1000
         ];
+        $room = Room::create(['user_id' => $user->id, 'data' => ['players' => [$userData]]]);
 
-        $redis->set('room:'.$room->id, json_encode(['users' => [$userData]]));
-
-        $this->commandExecutedData->pushData('room', $room);
-
-        return $this->commandExecutedData;
+        RoomUser::create(['room_id' => $room->id, 'user_id' => $user->id, 'user_info' => $userData]);
+        return $room;
     }
 }

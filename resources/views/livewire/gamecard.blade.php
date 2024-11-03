@@ -8,14 +8,18 @@ new class extends \Livewire\Volt\Component {
     public $type;
     public ?string $fillColor;
     public ?string $textColor;
+    public ?string $glow;
 
-    public function mount(?int $card, ?string $type)
+    public function mount(?int $card, ?string $type, bool $glow = false)
     {
         $this->card = $card;
         $this->type = $type;
         if ($type && $card) {
             $this->fillColor = in_array(Suit::get($type), ['heart', 'diamond']) ? 'fill-red-800' : 'fill-black';
             $this->textColor = in_array(Suit::get($type), ['heart', 'diamond']) ? 'text-red-800' : 'text-black';
+        }
+        if ($glow) {
+            $this->glow = 'animate-pulse border-yellow-400 border-2';
         }
     }
 
@@ -26,7 +30,7 @@ new class extends \Livewire\Volt\Component {
 
 <div>
     @if($card && $type)
-        <div class="grid grid-rows-5 w-28 h-40 md:w-20 md:h-28 border-black border-2 border rounded-lg bg-white">
+        <div class="grid grid-rows-5 w-28 h-40 md:w-20 md:h-28 border-black border-2 border rounded-lg bg-white {{$this->glow}}">
             <div
                     class="row-span-1 place-self-start pt-2 pl-2 fill-red-400">{{svg('mdi-cards-'. Suit::get($type), 'w-6 ' . $fillColor)}}</div>
             <div class="row-span-3 place-self-center text-2xl uppercase font-bold {{$textColor}}">{{Card::get($card)}}</div>

@@ -7,21 +7,19 @@ use App\Commands\CommandExecutionData;
 use App\Commands\CommandInterface;
 use App\Domains\Game\Cards\Cards;
 use App\Events\GameStatusUpdated;
+use App\Models\Room;
 use App\Models\RoomUser;
 use Illuminate\Support\Facades\Redis;
 
-readonly class StartPokerGame implements CommandInterface
+readonly class StartPokerGame
 {
-    public function __construct(private CommandExecutedData $commandExecutedData)
+    public function __construct()
     {
     }
 
-    #[\Override] public function execute(CommandExecutionData $data): CommandExecutedData
+    public function execute(Room $room)
     {
-        $room = $data->read('room');
-        $redis = Redis::connection()->client();
-        $currentRoom = json_decode($redis->get('room:' . $room->id), true);
-
+        $currentRoom = $room->data;
         $gameCards = Cards::getCards();
         $currentRoom['round_started'] = true;
         $currentRoom['cards'] = collect($gameCards)->shuffle()->toArray();
@@ -31,7 +29,6 @@ readonly class StartPokerGame implements CommandInterface
             $player['private_cards'] = [];
             $player['private_cards'][] = array_shift($currentRoom['cards']);
             $player['private_cards'][] = array_shift($currentRoom['cards']);
-            $player['playing_round'] = true;
             $player['total_round_bet'] = 0;
         }
 
@@ -66,8 +63,8 @@ readonly class StartPokerGame implements CommandInterface
         $currentRoom['players_actions'] = $playerTurns;
 
         $currentRoom['pot'] = $currentRoom['config']['big_blind_amount'] + $currentRoom['config']['small_blind_amount'];
-        $redis->set('room:' . $room->id, json_encode($currentRoom));
-        $redis->close();
+//        $redis->set('room:'.$room->id, json_encode($currentRoom));
+//        $redis->close();
 
         $data = [
             'total_pot' => $currentRoom['pot'],
@@ -95,12 +92,6 @@ readonly class StartPokerGame implements CommandInterface
                 'user_id' => $playerCards['id']
             ])->update(['user_info' => ['cards' => $playerCards['private_cards']]]);
         }
-
-        $this->commandExecutedData->pushData('pot', $currentRoom['pot']);
-        $this->commandExecutedData->pushData('dealer', $currentRoom['dealer']);
-        $this->commandExecutedData->pushData('big_blind', $currentRoom['big_blind']);
-        $this->commandExecutedData->pushData('small_blind', $currentRoom['small_blind']);
         event(new GameStatusUpdated($room->id));
-        return $this->commandExecutedData;
     }
 }

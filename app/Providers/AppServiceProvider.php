@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Synthesizers\PokerGameStateSynthesizer;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -11,7 +13,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        Livewire::propertySynthesizer(PokerGameStateSynthesizer::class);
     }
 
     /**

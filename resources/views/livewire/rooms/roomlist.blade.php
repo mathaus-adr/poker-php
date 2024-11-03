@@ -15,22 +15,18 @@ new class extends Component {
 
     public function join(Room $room)
     {
-        $commandExecutedData= app(\App\Domains\Game\Room\Commands\JoinRoom::class)->execute(new \App\Commands\CommandExecutionData([
-            'user' => auth()->user(), 'room' => $room
-        ]));
-
-        $this->redirectIntended(default: '/room/'.$commandExecutedData->read('room')->id, navigate: true);
+        app(\App\Domains\Game\Room\Commands\JoinRoom::class)->execute(auth()->user(), $room);
+        $this->redirectIntended(default: '/room/'.$room->id, navigate: true);
     }
 
     public function create()
     {
-        $commandExecutedData = app(\App\Domains\Game\Room\Commands\CreateRoom::class)->execute(new \App\Commands\CommandExecutionData());
-        if ($error = $commandExecutedData->read('error')) {
-            $this->addError('room_created', $error);
+        $room = app(\App\Domains\Game\Room\Commands\CreateRoom::class)->execute();
+        if (!$room) {
             return;
         }
 
-        $this->redirectIntended(default: '/room/'.$commandExecutedData->read('room')->id, navigate: true);
+        $this->redirectIntended(default: '/room/'.$room->id, navigate: true);
     }
 };
 ?>
