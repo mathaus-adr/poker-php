@@ -17,7 +17,7 @@ readonly class JoinRoom
 {
     public function execute(User $user, Room $room)
     {
-       $currentRoomUsers = $room->users;
+       $currentRoomUsers = $room->data['players'];
 
         $isOnRoom = collect($currentRoomUsers)->filter(function ($roomUser) use ($user) {
             if ($roomUser['id'] == $user['id']) {
@@ -25,6 +25,7 @@ readonly class JoinRoom
             }
             return false;
         });
+
         $currentRoom = $room->data;
 
         if (!$isOnRoom->count()) {

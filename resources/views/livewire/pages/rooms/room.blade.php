@@ -43,8 +43,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
     public function getListeners(): array
     {
         return [
-            'echo-private:room-'.$this->room->id.',GameStatusUpdated' => 'handleRoomEvent',
-            'echo-private:room-'.$this->room->id.',UserJoinInARoom' => 'handleRoomEvent'
+            'echo-private:room-'.$this->room->id.',GameStatusUpdated' => 'handleRoomEvent'
         ];
     }
 
@@ -111,7 +110,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                             {{    Str::of($otherPlayer['name'])->before(' ')}}
                                         </div>
                                         <div class="self-center pl-3 w-full text-right mr-2">
-                                            {{$otherPlayer['cash']}} $
+                                            {{$otherPlayer['cash'] ?? 0}} $
                                         </div>
                                     </div>
                                 </div>

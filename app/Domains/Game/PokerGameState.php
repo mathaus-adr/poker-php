@@ -27,6 +27,8 @@ class PokerGameState implements LoadGameStateInterface
     private bool $gameStarted;
     private ?int $playerTotalCash;
     private ?int $playerActualBet;
+    private ?int $totalBetToJoin = null;
+    private ?int $totalPot = null;
 
     public function load(int $roomId): PokerGameState
     {
@@ -54,6 +56,9 @@ class PokerGameState implements LoadGameStateInterface
             $this->playerActions = app(\App\Domains\Game\Rules\GetPlayerPossibleActions::class)->getActionsForPlayer(
                 $room
             );
+
+            $this->totalBetToJoin = $roomData['current_bet_amount_to_join'] ?? 0;
+            $this->totalPot = $roomData['total_pot'] ?? 0;
         }
 
         return $this;
