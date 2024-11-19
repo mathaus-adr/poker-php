@@ -43,7 +43,8 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
     public function getListeners(): array
     {
         return [
-            'echo-private:room-'.$this->room->id.',GameStatusUpdated' => 'handleRoomEvent'
+            'echo-private:room-'.$this->room->id.',GameStatusUpdated' => 'handleRoomEvent',
+            'echo-private:room-'.$this->room->id.',UserJoinInARoom' => 'handleRoomEvent'
         ];
     }
 
@@ -62,9 +63,10 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
         $pay->execute($this->room, auth()->user());
     }
 
-    public function fold(Room $room, \App\Domains\Game\Actions\Fold $fold): void
+    public function fold(): void
     {
-//        $fold->fold(new \App\Commands\CommandExecutionData(['room' => $this->room, 'player' => $this->player]));
+        $fold = app(\App\Domains\Game\Actions\Fold::class);
+        $fold->fold($this->room, auth()->user());
     }
 
 };
@@ -89,10 +91,10 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                                        class="" wire:key="{{$otherPlayer['id'].$index. '2'}}"/>
                                 </div>
                                 <div
-                                    class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{isset($this->room->data['current_player_to_bet']) && $this->room->data['current_player_to_bet']['id'] === $otherPlayer['id'] ? 'animate-pulse': ''}}">
+                                    class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{ $this->pokerGameState->getGameStarted() && $this->pokerGameState->isPlayerTurn($otherPlayer['id']) ? 'animate-pulse opacity-20': ''}}">
                                     <div
                                         class="self-center bg-white translate-x-1 w-20 rounded-l-lg h-8 content-center text-center">
-                                        {{$otherPlayer['total_round_bet']}}
+                                        {{$otherPlayer['total_round_bet'] ?? 0}}
                                     </div>
                                     <div class="avatar translate-x-1 ">
                                         <div
@@ -129,7 +131,8 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                 @else
                                     @foreach($this->pokerGameState->getFlop() as $card)
                                         <livewire:gamecard :type="$card['naipe']" :card="$card['carta']"
-                                                           class="" wire:key="{{$card['naipe'].$card['carta']}}"/>
+                                                           class="" wire:key="{{$card['naipe'].$card['carta']}}"
+                                                           :glow="in_array($card['naipe'].$card['carta'], $this->pokerGameState->getPlayerHand()['cards'] ?? [])"/>
                                     @endforeach
                                 @endif
                                 @if(!$this->pokerGameState->getTurn())
@@ -137,21 +140,23 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                                        class=""/>
                                 @else
                                     <livewire:gamecard :type="$this->pokerGameState->getTurn()[0]['naipe']"
-                                                       :card="$this->pokerGameState->getTurn[0]['carta']" class=""
-                                                       :wire:key="$this->pokerGameState->getTurn[0]['naipe'].$this->pokerGameState->getTurn[0]['carta']"/>
+                                                       :card="$this->pokerGameState->getTurn()[0]['carta']" class=""
+                                                       :wire:key="$this->pokerGameState->getTurn()[0]['naipe'].$this->pokerGameState->getTurn()[0]['carta']"
+                                                       :glow="in_array($this->pokerGameState->getTurn()[0]['naipe'].$this->pokerGameState->getTurn()[0]['carta'], $this->pokerGameState->getPlayerHand()['cards'] ?? [])"/>
                                 @endif
                                 @if(!$this->pokerGameState->getRiver())
                                     <livewire:gamecard :type="'0'" :card="0"
                                                        class=""/>
                                 @else
                                     <livewire:gamecard :type="$this->pokerGameState->getRiver()[0]['naipe']"
-                                                       :card="$this->pokerGameState->getRiver[0]['carta']" class=""
-                                                       :wire:key="$this->pokerGameState->getRiver[0]['naipe'].$this->pokerGameState->getRiver[0]['carta']"/>
+                                                       :card="$this->pokerGameState->getRiver()[0]['carta']" class=""
+                                                       :wire:key="$this->pokerGameState->getRiver()[0]['naipe'].$this->pokerGameState->getRiver()[0]['carta']"
+                                                       :glow="in_array($this->pokerGameState->getRiver()[0]['naipe'].$this->pokerGameState->getRiver()[0]['carta'], $this->pokerGameState->getPlayerHand()['cards'] ?? [])"/>
                                 @endif
 
                             </div>
-                                                        <div
-                                                            class="text-center bg-white mt-4 w-24 absolute rounded-lg left-1/2 text-black h-6">{{$room->data['total_pot'] ?? 0}}</div>
+                            <div
+                                class="text-center bg-white mt-4 w-24 absolute rounded-lg left-1/2 text-black h-6">{{$room->data['total_pot'] ?? 0}}</div>
                         </div>
 
 
@@ -162,18 +167,18 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
 
                                         <livewire:gamecard :type="$playerCard['naipe']" :card="$playerCard['carta']"
                                                            class="shadow-lg shadow-inner"
-                                                           :glow="in_array($playerCard['naipe'].$playerCard['carta'], $hand['cards'] ?? [])"
+                                                           :glow="in_array($playerCard['naipe'].$playerCard['carta'], $this->pokerGameState->getPlayerHand()['cards'] ?? [])"
                                                            wire:key="{{$playerCard['naipe'].$playerCard['carta']}}"/>
-{{--                                                                                {{$playerCard['naipe'].$playerCard['carta'], $hand}}--}}
+                                        {{--                                                                                {{$playerCard['naipe'].$playerCard['carta'], $hand}}--}}
                                     @endforeach
 
                                 @endif
                             </div>
                             <div
-                                class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{$this->pokerGameState->getGameStarted() ? 'animate-pulse opacity-20': ''}}">
+                                class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{$this->pokerGameState->getGameStarted() && $this->pokerGameState->isPlayerTurn(auth()->user()->id) ? 'animate-pulse opacity-20': ''}}">
                                 <div
                                     class="self-center bg-white translate-x-1 w-20 rounded-l-lg h-8 content-center text-center">
-                                                                        {{$playerInfo['total_round_bet'] ?? 0}}
+                                    {{$this->pokerGameState->getPlayerActualBet() ?? 0}}
                                 </div>
                                 <div class="avatar translate-x-1">
                                     <div
@@ -190,7 +195,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                         {{Str::of(auth()->user()->name)->before(' ') }}
                                     </div>
                                     <div class="self-center pl-3 w-full text-right mr-2">
-                                                                                {{$playerInfo['cash'] ?? 0}}
+                                        {{$this->pokerGameState->getPlayerTotalCash() ?? 0}}
                                     </div>
                                 </div>
                             </div>

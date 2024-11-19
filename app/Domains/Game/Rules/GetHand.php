@@ -10,13 +10,14 @@ class GetHand
 {
     public function getHand(?array $cards): ?array
     {
-        if(!$cards) {
+        if (!$cards) {
             return null;
         }
 
         usort($cards, function ($a, $b) {
             return $a['carta'] <= $b['carta'];
         });
+
 
         if (count($cards) == 2) {
             if ($cards[0]['carta'] == $cards[1]['carta']) {
@@ -38,6 +39,17 @@ class GetHand
                 'hand' => 'HighCard',
                 'cards' => $this->mapCards([$cards[0]])
             ];
+        }
+
+        if ($cards > 2) {
+
+            $handCalculator = new HandCalculator();
+            return $handCalculator->calculateBestHand($cards);
+
+//            return [
+//                'hand' => $hand,
+//                'cards' => $this->mapCards(collect($cards)->shift(5)->toArray())
+//            ];
         }
     }
 

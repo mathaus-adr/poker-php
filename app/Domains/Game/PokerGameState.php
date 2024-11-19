@@ -8,11 +8,13 @@ use App\Models\User;
 
 class PokerGameState implements LoadGameStateInterface
 {
-    private ?User $player;
+    private ?array $player;
+
+    private ?array $players;
 
     private ?array $playerCards = null;
 
-    private ?User $playerTurn;
+    private ?array $playerTurn;
 
     private ?array $remnantPlayers = null;
 
@@ -23,65 +25,80 @@ class PokerGameState implements LoadGameStateInterface
     private ?array $playerActions = null;
 
     private bool $gameStarted;
+    private ?int $playerTotalCash;
+    private ?int $playerActualBet;
 
     public function load(int $roomId): PokerGameState
     {
         $room = Room::findOrFail($roomId);
         $roomData = $room->data;
+        $this->players = $roomData['players'] ?? null;
         $this->playerTurn = $roomData['current_player_to_bet'] ?? null;
-        $this->player = auth()->user();
+        $this->player = auth()->user()->toArray();
         $this->gameStarted = $roomData['round_started'] ?? false;
-        $this->remnantPlayers = collect($roomData['players'])->filter(function ($player) {
-            return $player['id'] !== $this->player->id;
+        $this->remnantPlayers = collect($this->getPlayers())->filter(function ($player) {
+            return $player['id'] !== $this->player['id'];
         })->toArray();
 
         if ($this->gameStarted) {
-            $this->playerCards = $this->getPlayerPrivateCards($roomData['players']);
+            $this->playerCards = $this->getPlayerPrivateCards();
 
-
-            $this->flop = $this->room->data['flop'] ?? null;
-            $this->turn = $this->room->data['turn'] ?? null;
-            $this->river = $this->room->data['river'] ?? null;
+            $this->flop = $roomData['flop'] ?? null;
+            $this->turn = $roomData['turn'] ?? null;
+            $this->river = $roomData['river'] ?? null;
 
             $this->playerHand = $this->getHand($this->flop, $this->turn, $this->river);
 
+            $this->playerTotalCash = $this->getPlayerTotalCash();
+            $this->playerActualBet = $this->getPlayerActualBet();
             $this->playerActions = app(\App\Domains\Game\Rules\GetPlayerPossibleActions::class)->getActionsForPlayer(
                 $room
             );
         }
+
         return $this;
     }
 
-    private
-    function getHand(
+    private function getHand(
         ?array $flop,
         ?array $turn,
         ?array $river
     ): ?array {
-        $cards = $this->playerInfo['private_cards'] ?? null;
-
-        if ($flop) {
-            $cards = array_merge($cards, $flop);
-        }
-
-        if ($turn) {
-            $cards = array_merge($cards, $turn);
-        }
-
-        if ($river) {
-            $cards = array_merge($cards, $river);
-        }
+        $cards = $this->getAllPlayerCards($flop, $turn, $river);
 
         return app(GetHand::class)->getHand($cards);
     }
 
-    private
-    function getPlayerPrivateCards(
-        ?array $players
-    ): ?array {
-        return collect($players)->filter(function ($player) {
-            return $player['id'] === auth()->user()->id;
-        })->first()['private_cards'] ?? null;
+    private function getPlayerPrivateCards(): ?array
+    {
+        return $this->getPlayerRoomInformation()['private_cards'] ?? null;
+    }
+
+    /**
+     * @param  array|null  $players
+     * @param  int  $playerId
+     * @return mixed
+     */
+    public function getPlayerRoomInformation(): ?array
+    {
+        return collect($this->getPlayers())->filter(function ($player) {
+            return $player['id'] === $this->player['id'];
+        })->first();
+    }
+
+    public function getPlayerTotalCash(): ?int
+    {
+        return $this->getPlayerRoomInformation()['cash'] ?? null;
+    }
+
+    public function getPlayers(): ?array
+    {
+        return $this->players;
+    }
+
+    public function getPlayerActualBet(): ?int
+    {
+        return $this->getPlayerRoomInformation()['total_round_bet'] ?? null;
     }
 
     public function getRemnantPlayers(): ?array
@@ -119,14 +136,19 @@ class PokerGameState implements LoadGameStateInterface
         return $this->playerCards;
     }
 
-    public function getPlayer(): ?User
+    public function getPlayer(): ?array
     {
         return $this->player;
     }
 
-    public function getPlayerTurn(): ?User
+    public function getPlayerTurn(): ?array
     {
         return $this->playerTurn;
+    }
+
+    public function isPlayerTurn(int $playerId): bool
+    {
+        return $this->playerTurn['id'] === $playerId;
     }
 
     public function getGameStarted(): bool
@@ -134,5 +156,46 @@ class PokerGameState implements LoadGameStateInterface
         return $this->gameStarted;
     }
 
+    public function loadFromArray(array $data): PokerGameState
+    {
+        $this->player = $data['player'];
+        $this->playerCards = $data['playerCards'];
+        $this->playerTurn = $data['playerTurn'];
+        $this->remnantPlayers = $data['remnantPlayers'];
+        $this->flop = $data['flop'];
+        $this->turn = $data['turn'];
+        $this->river = $data['river'];
+        $this->playerHand = $data['playerHand'];
+        $this->playerActions = $data['playerActions'];
+        $this->gameStarted = $data['gameStarted'];
+        $this->playerTotalCash = $data['playerTotalCash'];
+        $this->playerActualBet = $data['playerActualBet'];
+        $this->players = $data['players'];
+        return $this;
+    }
 
+    /**
+     * @param  array|null  $flop
+     * @param  array|null  $turn
+     * @param  array|null  $river
+     * @return array|null
+     */
+    public function getAllPlayerCards(): ?array
+    {
+        $cards = $this->getPlayerPrivateCards() ?? null;
+
+        if ($this->flop) {
+            $cards = array_merge($cards, $this->flop);
+        }
+
+        if ($this->turn) {
+            $cards = array_merge($cards, $this->turn);
+        }
+
+        if ($this->river) {
+            $cards = array_merge($cards, $this->river);
+        }
+
+        return $cards;
+    }
 }

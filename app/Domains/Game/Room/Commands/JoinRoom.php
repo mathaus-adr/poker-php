@@ -5,6 +5,7 @@ namespace App\Domains\Game\Room\Commands;
 use App\Commands\CommandExecutedData;
 use App\Commands\CommandExecutionData;
 use App\Commands\CommandInterface;
+use App\Events\GameStatusUpdated;
 use App\Events\UserJoinInARoom;
 use App\Models\Room;
 use App\Models\RoomUser;
@@ -24,18 +25,20 @@ readonly class JoinRoom
             }
             return false;
         });
+        $currentRoom = $room->data;
 
         if (!$isOnRoom->count()) {
-            $currentRoom['users'][] = [
+            $currentRoom['players'][] = [
                 'id' => $user->id,
                 'name' => $user->name,
                 'cash' => 1000
             ];
             RoomUser::create(['room_id' => $room->id, 'user_id' => $user->id]);
-            event(new UserJoinInARoom($room, $user));
+            $room->data = $currentRoom;
+            $room->save();
+            event(new GameStatusUpdated($room->id));
         }
 
-        $room->data = $currentRoom;
-        $room->save();
+
     }
 }

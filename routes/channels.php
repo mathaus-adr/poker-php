@@ -22,7 +22,5 @@ Broadcast::channel('player-{id}', function ($user, $id) {
 });
 
 Broadcast::channel('room-{id}', function ($user, $id) {
-    $client = Redis::connection()->client();
-    $gameUsers = collect(json_decode($client->get('room:'.$id),true)['users']);
-    return $gameUsers->firstWhere('id', $user->id);
+    return true;
 });

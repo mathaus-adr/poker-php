@@ -23,7 +23,12 @@ readonly class StartPokerGame
         $gameCards = Cards::getCards();
         $currentRoom['round_started'] = true;
         $currentRoom['cards'] = collect($gameCards)->shuffle()->toArray();
-        $currentRoom['round_players'] = $currentRoom['users'];
+
+        if (!key_exists('players', $currentRoom)) {
+            return;
+        }
+
+        $currentRoom['round_players'] = $currentRoom['players'];
 
         foreach ($currentRoom['round_players'] as &$player) {
             $player['private_cards'] = [];
@@ -60,11 +65,14 @@ readonly class StartPokerGame
             ($playerTurns->count() - 1) => $currentRoom['big_blind']
         ]);
 
+        $playerTurns = $playerTurns->map(function ($player) {
+            $player['playing_round'] = true;
+            return $player;
+        });
+
         $currentRoom['players_actions'] = $playerTurns;
 
         $currentRoom['pot'] = $currentRoom['config']['big_blind_amount'] + $currentRoom['config']['small_blind_amount'];
-//        $redis->set('room:'.$room->id, json_encode($currentRoom));
-//        $redis->close();
 
         $data = [
             'total_pot' => $currentRoom['pot'],
@@ -81,6 +89,10 @@ readonly class StartPokerGame
             'players' => $playerTurns->toArray(),
             'current_bet_amount_to_join' => $currentRoom['config']['big_blind_amount'],
             'current_player_to_bet' => $playerTurns->first(),
+            'round_started' => true,
+            'flop' => $currentRoom['flop'],
+            'turn' => $currentRoom['turn'],
+            'river' => $currentRoom['river'],
         ];
 
         $room->data = $data;
