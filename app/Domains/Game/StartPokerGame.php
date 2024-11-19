@@ -23,8 +23,10 @@ readonly class StartPokerGame
         $gameCards = Cards::getCards();
         $currentRoom['round_started'] = true;
         $currentRoom['cards'] = collect($gameCards)->shuffle()->toArray();
-        $currentRoom['round_players'] = $currentRoom['users'];
-
+        $currentRoom['round_players'] = $currentRoom['players'];
+        if (count($currentRoom['round_players']) <= 2) {
+            return;
+        }
         foreach ($currentRoom['round_players'] as &$player) {
             $player['private_cards'] = [];
             $player['private_cards'][] = array_shift($currentRoom['cards']);
@@ -43,6 +45,8 @@ readonly class StartPokerGame
         $players = collect($currentRoom['round_players']);
         $dealerAndBigBlind = $players->shift(2);
         $playerTurns = $players->push($dealerAndBigBlind->shift(), $dealerAndBigBlind->shift());
+
+
         $currentRoom['dealer'] = $playerTurns[$playerTurns->count() - 2];
         $currentRoom['big_blind'] = $playerTurns[$playerTurns->count() - 1];
         $currentRoom['small_blind'] = $playerTurns->first();
@@ -63,8 +67,6 @@ readonly class StartPokerGame
         $currentRoom['players_actions'] = $playerTurns;
 
         $currentRoom['pot'] = $currentRoom['config']['big_blind_amount'] + $currentRoom['config']['small_blind_amount'];
-//        $redis->set('room:'.$room->id, json_encode($currentRoom));
-//        $redis->close();
 
         $data = [
             'total_pot' => $currentRoom['pot'],

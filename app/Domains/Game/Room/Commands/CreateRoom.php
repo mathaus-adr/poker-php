@@ -34,6 +34,7 @@ readonly class CreateRoom
             'name' => $user->name,
             'cash' => 1000
         ];
+
         $room = Room::create(['user_id' => $user->id, 'data' => ['players' => [$userData]]]);
 
         RoomUser::create(['room_id' => $room->id, 'user_id' => $user->id, 'user_info' => $userData]);

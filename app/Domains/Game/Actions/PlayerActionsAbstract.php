@@ -18,7 +18,6 @@ abstract class PlayerActionsAbstract implements PlayerActionInterface
 
     private function isPlayerTurn(Room $room, User $user): bool
     {
-        dd($room->data['current_player_to_bet']['id']);
         return $room->data['current_player_to_bet']['id'] === $user->id;
     }
 

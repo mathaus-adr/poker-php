@@ -28,14 +28,12 @@ class PokerGameStateSynthesizer extends Synth
             'playerActions' => $target->getPlayerActions(),
             'gameStarted' => $target->getGameStarted(),
         ], []];
-//        dd($target, 'dehydrating');
     }
 
     public function hydrate($value)
     {
         $pokerGameState = new PokerGameState;
-        dd($value, 'hydrating');
-//        $pokerGameState
+        $pokerGameState->fillData($value);
 
         return $pokerGameState;
     }

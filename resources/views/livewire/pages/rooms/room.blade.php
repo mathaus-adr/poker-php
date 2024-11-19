@@ -92,7 +92,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                     class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{isset($this->room->data['current_player_to_bet']) && $this->room->data['current_player_to_bet']['id'] === $otherPlayer['id'] ? 'animate-pulse': ''}}">
                                     <div
                                         class="self-center bg-white translate-x-1 w-20 rounded-l-lg h-8 content-center text-center">
-                                        {{$otherPlayer['total_round_bet']}}
+                                        {{$otherPlayer['total_round_bet'] ?? 0}}
                                     </div>
                                     <div class="avatar translate-x-1 ">
                                         <div
@@ -109,7 +109,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                             {{    Str::of($otherPlayer['name'])->before(' ')}}
                                         </div>
                                         <div class="self-center pl-3 w-full text-right mr-2">
-                                            {{$otherPlayer['cash']}} $
+                                            {{$otherPlayer['cash'] ?? 0}} $
                                         </div>
                                     </div>
                                 </div>
@@ -164,7 +164,6 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                                            class="shadow-lg shadow-inner"
                                                            :glow="in_array($playerCard['naipe'].$playerCard['carta'], $hand['cards'] ?? [])"
                                                            wire:key="{{$playerCard['naipe'].$playerCard['carta']}}"/>
-{{--                                                                                {{$playerCard['naipe'].$playerCard['carta'], $hand}}--}}
                                     @endforeach
 
                                 @endif
@@ -173,7 +172,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                 class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{$this->pokerGameState->getGameStarted() ? 'animate-pulse opacity-20': ''}}">
                                 <div
                                     class="self-center bg-white translate-x-1 w-20 rounded-l-lg h-8 content-center text-center">
-                                                                        {{$playerInfo['total_round_bet'] ?? 0}}
+                                                                        {{$this->pokerGameState->getCurrentPlayerTotalBet() ?? 0}}
                                 </div>
                                 <div class="avatar translate-x-1">
                                     <div
@@ -190,7 +189,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                         {{Str::of(auth()->user()->name)->before(' ') }}
                                     </div>
                                     <div class="self-center pl-3 w-full text-right mr-2">
-                                                                                {{$playerInfo['cash'] ?? 0}}
+                                                                                {{$this->pokerGameState->getCurrentPlayerTotalCash()}} $
                                     </div>
                                 </div>
                             </div>

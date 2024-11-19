@@ -8,11 +8,11 @@ use App\Models\User;
 
 class PokerGameState implements LoadGameStateInterface
 {
-    private ?User $player;
+    private ?array $playerData = null;
 
     private ?array $playerCards = null;
 
-    private ?User $playerTurn;
+    private ?array $playerTurn = null;
 
     private ?array $remnantPlayers = null;
 
@@ -24,15 +24,20 @@ class PokerGameState implements LoadGameStateInterface
 
     private bool $gameStarted;
 
+    private ?int $totalBetToJoin = null;
+    private ?int $totalPot = null;
+
     public function load(int $roomId): PokerGameState
     {
         $room = Room::findOrFail($roomId);
         $roomData = $room->data;
+
+        $this->gameStarted = $roomData['round_started'] ?? false;
         $this->playerTurn = $roomData['current_player_to_bet'] ?? null;
-        $this->player = auth()->user();
+        $this->playerData = collect($roomData['players'])->firstWhere('id', auth()->user()->id);
         $this->gameStarted = $roomData['round_started'] ?? false;
         $this->remnantPlayers = collect($roomData['players'])->filter(function ($player) {
-            return $player['id'] !== $this->player->id;
+            return $player['id'] !== $this->playerData['id'];
         })->toArray();
 
         if ($this->gameStarted) {
@@ -48,7 +53,11 @@ class PokerGameState implements LoadGameStateInterface
             $this->playerActions = app(\App\Domains\Game\Rules\GetPlayerPossibleActions::class)->getActionsForPlayer(
                 $room
             );
+
+            $this->totalBetToJoin = $roomData['current_bet_amount_to_join'] ?? 0;
+            $this->totalPot = $roomData['total_pot'] ?? 0;
         }
+
         return $this;
     }
 
@@ -119,12 +128,12 @@ class PokerGameState implements LoadGameStateInterface
         return $this->playerCards;
     }
 
-    public function getPlayer(): ?User
+    public function getPlayer(): ?array
     {
-        return $this->player;
+        return $this->playerData;
     }
 
-    public function getPlayerTurn(): ?User
+    public function getPlayerTurn(): ?array
     {
         return $this->playerTurn;
     }
@@ -134,5 +143,32 @@ class PokerGameState implements LoadGameStateInterface
         return $this->gameStarted;
     }
 
+    public function getCurrentPlayerTotalBet(): int
+    {
+        return $this->playerData['total_round_bet'] ?? 0;
+    }
+
+    public function getCurrentPlayerTotalCash(): int
+    {
+        return $this->playerData['cash'] ?? 0;
+    }
+
+
+    public function fillData(array $data)
+    {
+        foreach ($data as $key => $value) {
+            $this->{$key} = $value;
+        }
+    }
+
+    public function getTotalPot(): int
+    {
+        return $this->totalPot ?? 0;
+    }
+
+    public function getTotalBetToJoin(): ?int
+    {
+        return $this->totalBetToJoin ?? 0;
+    }
 
 }
