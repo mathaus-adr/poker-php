@@ -59,7 +59,7 @@ readonly class Fold
 
         //TODO SE TODOS ESTIVEREM COM O MESMO VALOR APOSTADO E NÃO FOLDARAM, REVELAR O FLOP
 
-        if ($this->pokerGameState->isAllPlayersWithSameBet() && !$this->pokerGameState->isAllPlayersFolded()) {
+        if ($this->pokerGameState->isAllPlayersWithSameBet()) {
             $roomData = $room->data;
             $roomData['flop'] = [];
             $roomData['flop'][] = array_shift($roomData['cards']);
@@ -69,16 +69,11 @@ readonly class Fold
             $room->save();
         }
 
-
-
         //TODO SE TODOS ESTIVEREM COM O MESMO VALOR APOSTADO E NÃO FOLDARAM, E JÁ FOI REVELADO O FLOP REVELAR O TURN
 
+
+
         //TODO SE TODOS ESTIVEREM COM O MESMO VALOR APOSTADO E NÃO FOLDARAM, E O FLOP E O TURN JÁ FORAM REVELADOS, REVELAR O RIVER
-
-
-
-
         event(new GameStatusUpdated($room->id));
-
     }
 }

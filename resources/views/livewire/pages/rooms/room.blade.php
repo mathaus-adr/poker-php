@@ -14,7 +14,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
     public ?User $player;
 
     public ?PokerGameState $pokerGameState;
-
+    public $total_raise = 0;
     public array $otherPlayersPositions = [
         'left-0 top-0 translate-x-32 mt-5 md:translate-x-24', //top left
         'left-0 top-1/2 -translate-y-24 transform-gpu md:translate-x-24', //middle left
@@ -68,6 +68,18 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
         $fold->fold($this->room, auth()->user());
     }
 
+    public function check(): void
+    {
+        $check = app(\App\Domains\Game\Actions\Check::class);
+        $check->check($this->room, auth()->user());
+    }
+
+    public function aumentar($raiseAmount): void
+    {
+        $raise = app(\App\Domains\Game\Actions\Raise::class);
+        $raise->raise($this->room, auth()->user(), $raiseAmount);
+    }
+
 };
 
 ?>
@@ -82,7 +94,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                     <div class="relative bg-green-800 h-screen w-full rounded-lg">
 
                         @foreach($this->pokerGameState->getRemnantPlayers() as $index => $otherPlayer)
-                            <div class="absolute {{$otherPlayersPositions[$index]}}">
+                            <div class="absolute {{$otherPlayersPositions[$otherPlayer['play_index']-1]}}">
                                 <div class="flex flex-row gap-4">
                                     <livewire:gamecard :type="0" :card="0"
                                                        class="" wire:key="{{$otherPlayer['id'].$index. '1'}}"/>
@@ -90,22 +102,22 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                                        class="" wire:key="{{$otherPlayer['id'].$index. '2'}}"/>
                                 </div>
                                 <div
-                                    class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{ $this->pokerGameState->getGameStarted() && $this->pokerGameState->isPlayerTurn($otherPlayer['id']) ? 'animate-pulse opacity-20': ''}}">
+                                        class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{ $this->pokerGameState->getGameStarted() && $this->pokerGameState->isPlayerTurn($otherPlayer['id']) ? 'animate-pulse opacity-20': ''}}">
                                     <div
-                                        class="self-center bg-white translate-x-1 w-20 rounded-l-lg h-8 content-center text-center">
+                                            class="self-center bg-white translate-x-1 w-20 rounded-l-lg h-8 content-center text-center">
                                         {{$otherPlayer['total_round_bet'] ?? 0}}
                                     </div>
                                     <div class="avatar translate-x-1 ">
                                         <div
-                                            class="w-16 h-16 content-center text-center rounded-full shrink-0 bg-white ring ring-white ring-offset-base-100 ring-offset-2">
+                                                class="w-16 h-16 content-center text-center rounded-full shrink-0 bg-white ring ring-white ring-offset-base-100 ring-offset-2">
                                         <span
-                                            class="text-xl ">
+                                                class="text-xl ">
                                             {{Str::of($otherPlayer['name'])->before(' ')->ucfirst()[0]}}
                                         </span>
                                         </div>
                                     </div>
                                     <div
-                                        class="flex flex-row w-60 h-12 md:w-48 md:h-8 content-center self-center bg-white rounded-r-lg">
+                                            class="flex flex-row w-60 h-12 md:w-48 md:h-8 content-center self-center bg-white rounded-r-lg">
                                         <div class="self-center pl-3">
                                             {{    Str::of($otherPlayer['name'])->before(' ')}}
                                         </div>
@@ -118,7 +130,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
 
                         @endforeach
                         <div
-                            class="absolute top-1/2 right-1/2 -translate-y-24 translate-x-72 md:translate-x-52 transform-gpu">
+                                class="absolute top-1/2 right-1/2 -translate-y-24 translate-x-72 md:translate-x-52 transform-gpu">
                             <div class="flex flex-row gap-4 ">
                                 @if(!$this->pokerGameState->getFlop())
                                     <livewire:gamecard :type="'0'" :card="0"
@@ -155,7 +167,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
 
                             </div>
                             <div
-                                class="text-center bg-white mt-4 w-24 absolute rounded-lg left-1/2 text-black h-6">{{$room->data['total_pot'] ?? 0}}</div>
+                                    class="text-center bg-white mt-4 w-24 absolute rounded-lg left-1/2 text-black h-6">{{$room->data['total_pot'] ?? 0}}</div>
                         </div>
 
 
@@ -174,22 +186,22 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                                 @endif
                             </div>
                             <div
-                                class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{$this->pokerGameState->getGameStarted() && $this->pokerGameState->isPlayerTurn(auth()->user()->id) ? 'animate-pulse opacity-20': ''}}">
+                                    class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{$this->pokerGameState->getGameStarted() && $this->pokerGameState->isPlayerTurn(auth()->user()->id) ? 'animate-pulse opacity-20': ''}}">
                                 <div
-                                    class="self-center bg-white translate-x-1 w-20 rounded-l-lg h-8 content-center text-center">
+                                        class="self-center bg-white translate-x-1 w-20 rounded-l-lg h-8 content-center text-center">
                                     {{$this->pokerGameState->getPlayerActualBet() ?? 0}}
                                 </div>
                                 <div class="avatar translate-x-1">
                                     <div
-                                        class="w-16 h-16 content-center text-center rounded-full shrink-0 bg-white ring ring-white ring-offset-base-100 ring-offset-2 ">
+                                            class="w-16 h-16 content-center text-center rounded-full shrink-0 bg-white ring ring-white ring-offset-base-100 ring-offset-2 ">
                                         <span
-                                            class="text-xl font-extrabold">
+                                                class="text-xl font-extrabold">
                                             {{Str::of(auth()->user()->name)->before(' ')->ucfirst()[0]}}
                                         </span>
                                     </div>
                                 </div>
                                 <div
-                                    class="flex flex-row w-60 h-12 content-center self-center bg-white rounded-r-lg md:w-48 md:h-8">
+                                        class="flex flex-row w-60 h-12 content-center self-center bg-white rounded-r-lg md:w-48 md:h-8">
                                     <div class="self-center pl-3">
                                         {{Str::of(auth()->user()->name)->before(' ') }}
                                     </div>
@@ -206,6 +218,11 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
                             <div class="flex flex-row gap-4">
                                 @if($this->pokerGameState->getPlayerActions())
                                     @foreach($this->pokerGameState->getPlayerActions() as $action)
+                                        @if($action == 'aumentar')
+                                            <button class="btn"
+                                                    onclick="raise_modal.showModal()">{{ucfirst($action)}}</button>
+                                            @continue
+                                        @endif
                                         <button class="btn" wire:click="{{$action}}">{{ucfirst($action)}}</button>
                                     @endforeach
                                 @endif
@@ -216,4 +233,26 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
             </div>
         </div>
     </div>
+    <dialog id="raise_modal" class="modal">
+        <div class="modal-box" x-data="{raise_amount : {{$this->pokerGameState->getTotalBetToJoin() * 2}}}">
+            <h3 class="text-lg font-bold">Aumentar aposta</h3>
+            <div class="modal-box">
+                <form method="dialog">
+                    <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                </form>
+            </div>
+            <div class="modal-body m-2">
+                <input type="range" x-on:change="raise_amount = $event.target.value" wire:model="total_raise"
+                       min="{{$this->pokerGameState->getTotalBetToJoin() * 2}}"
+                       value="{{$this->pokerGameState->getTotalBetToJoin() * 2}}"
+                       max="{{$this->pokerGameState->getPlayerTotalCash()}}" class="range range-success"/>
+                <span x-text="raise_amount"></span>
+            </div>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button wire:click="aumentar(raise_amount)" class="btn btn-success">Aumentar aposta</button>
+                </form>
+            </div>
+        </div>
+    </dialog>
 </div>

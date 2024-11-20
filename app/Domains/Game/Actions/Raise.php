@@ -2,30 +2,40 @@
 
 namespace App\Domains\Game\Actions;
 
+use App\Domains\Game\PokerGameState;
+use App\Events\GameStatusUpdated;
 use App\Models\Room;
 use App\Models\User;
 
 class Raise
 {
-    public function execute(Room $room, User $user): void
+    public function __construct(private PokerGameState $pokerGameState)
     {
-        $roomData = $room->data;
-        $player = collect($roomData['players'])->firstWhere('id', $user->id);
+    }
 
-        $isCorrectPlayerToMakeAnAction = $roomData['current_player_to_bet']['id'] === $user->id;
+    public function raise(Room $room, User $user, int $raiseAmount): void
+    {
+        $this->pokerGameState->load($room->id);
 
-        if (!$isCorrectPlayerToMakeAnAction) {
+        if (!$this->pokerGameState->isPlayerTurn($user->id)) {
             return;
         }
 
-        $player['total_round_bet'] += $roomData['current_bet_amount_to_join'];
-        $player['total_bet'] += $roomData['current_bet_amount_to_join'];
+        $roomData = $room->data;
 
-        $roomData['current_bet_amount_to_join'] += $roomData['current_bet_amount_to_join'];
+        $player = array_shift($roomData['players']);
+
+        $player['total_round_bet'] += $raiseAmount;
+        $roomData['total_pot'] += $raiseAmount;
+
+        $roomData['current_bet_amount_to_join'] = $player['total_round_bet'];
 
         $roomData['current_player_to_bet'] = $roomData['players'][0];
+        $roomData['players'][] = $player;
 
         $room->data = $roomData;
         $room->save();
+
+        event(new GameStatusUpdated($room->id));
     }
 }

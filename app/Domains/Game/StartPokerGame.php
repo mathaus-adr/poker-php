@@ -47,12 +47,19 @@ readonly class StartPokerGame
         $currentRoom['river'][] = array_shift($currentRoom['cards']);
         $players = collect($currentRoom['round_players']);
         $dealerAndBigBlind = $players->shift(2);
+
+
+
         $playerTurns = $players->push($dealerAndBigBlind->shift(), $dealerAndBigBlind->shift());
+        //penultimo
         $currentRoom['dealer'] = $playerTurns[$playerTurns->count() - 2];
+        //ultimo
         $currentRoom['big_blind'] = $playerTurns[$playerTurns->count() - 1];
+
         $currentRoom['small_blind'] = $playerTurns->first();
 
         $currentRoom['config'] = [];
+
         $currentRoom['big_blind']['total_round_bet'] = $currentRoom['config']['big_blind_amount'] = 10;
         $currentRoom['small_blind']['total_round_bet'] = $currentRoom['config']['small_blind_amount'] = 5;
 
@@ -64,9 +71,12 @@ readonly class StartPokerGame
             0 => $currentRoom['small_blind'],
             ($playerTurns->count() - 1) => $currentRoom['big_blind']
         ]);
+        $play_index = 1;
 
-        $playerTurns = $playerTurns->map(function ($player) {
+        $playerTurns = $playerTurns->map(function ($player)  use(&$play_index){
             $player['playing_round'] = true;
+            $player['play_index'] = $play_index;
+            $play_index++;
             return $player;
         });
 
@@ -90,9 +100,7 @@ readonly class StartPokerGame
             'current_bet_amount_to_join' => $currentRoom['config']['big_blind_amount'],
             'current_player_to_bet' => $playerTurns->first(),
             'round_started' => true,
-            'flop' => $currentRoom['flop'],
-            'turn' => $currentRoom['turn'],
-            'river' => $currentRoom['river'],
+            'cards' => array_merge($currentRoom['flop'], $currentRoom['turn'], $currentRoom['river'])
         ];
 
         $room->data = $data;

@@ -36,7 +36,10 @@ class PokerGameState implements LoadGameStateInterface
         $roomData = $room->data;
         $this->players = $roomData['players'] ?? null;
         $this->playerTurn = $roomData['current_player_to_bet'] ?? null;
-        $this->player = auth()->user()->toArray();
+        $this->player = collect($this->players)->filter(function ($player) {
+            return $player['id'] === auth()->id();
+        })->first();
+
         $this->gameStarted = $roomData['round_started'] ?? false;
         $this->remnantPlayers = collect($this->getPlayers())->filter(function ($player) {
             return $player['id'] !== $this->player['id'];
@@ -202,5 +205,30 @@ class PokerGameState implements LoadGameStateInterface
         }
 
         return $cards;
+    }
+
+    public function isAllPlayersWithSameBet(): bool
+    {
+        $firstPlayer = $this->players[0];
+        $firstPlayerBet = $firstPlayer['total_round_bet'];
+
+        foreach ($this->players as $player) {
+            if ($player['total_round_bet'] !== $firstPlayerBet) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function allPlayersHaveBet(): bool
+    {
+//        $this->player
+
+        return true;
+    }
+    public function getTotalBetToJoin(): ?int
+    {
+        return $this->totalBetToJoin;
     }
 }

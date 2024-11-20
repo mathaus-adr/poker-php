@@ -77,13 +77,14 @@ class HandCalculator
         }
 
         if ($this->isTwoPair($cards)) {
+
             return [
                 Hands::TwoPair->value,
                 'cards' => $this->mapCards(
                     $this->getPairs($cards)->shift(2)
                         ->flatten(1)
-                        ->toArray()
-                )
+                        ->toArray())
+
             ];
         }
 
@@ -102,14 +103,6 @@ class HandCalculator
                 'cards' => $this->mapCards([$cards[0]])
             ];
         }
-    }
-
-    public function sortCards(array $cards): array
-    {
-        usort($cards, function (Card $a, Card $b) {
-            return $a->carta <= $b->carta;
-        });
-        return $cards;
     }
 
     private function isHighCard(array $cards): bool
@@ -151,7 +144,6 @@ class HandCalculator
                 return true;
             }
         });
-
 
         return $filteredPairs->count() == 2;
     }
