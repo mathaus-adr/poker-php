@@ -30,6 +30,8 @@ class PokerGameState implements LoadGameStateInterface
     private ?int $totalBetToJoin = null;
     private ?int $totalPot = null;
 
+    private bool $isShowDown = false;
+
     public function load(int $roomId): PokerGameState
     {
         $room = Room::findOrFail($roomId);
@@ -62,6 +64,7 @@ class PokerGameState implements LoadGameStateInterface
 
             $this->totalBetToJoin = $roomData['current_bet_amount_to_join'] ?? 0;
             $this->totalPot = $roomData['total_pot'] ?? 0;
+            $this->isShowDown = $roomData['is_showdown'] ?? false;
         }
 
         return $this;
@@ -230,5 +233,10 @@ class PokerGameState implements LoadGameStateInterface
     public function getTotalBetToJoin(): ?int
     {
         return $this->totalBetToJoin;
+    }
+
+    public function isShowDown(): bool
+    {
+        return $this->isShowDown;
     }
 }

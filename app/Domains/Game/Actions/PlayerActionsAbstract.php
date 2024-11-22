@@ -35,7 +35,7 @@ abstract class PlayerActionsAbstract implements PlayerActionInterface
     {
         if ($this->canBeExecuted($room, $user)) {
             $this->executeAction($room, $user);
-            $this->executeAfter($room, $user);
+//            $this->executeAfter($room, $user);
         }
     }
 
@@ -48,7 +48,7 @@ abstract class PlayerActionsAbstract implements PlayerActionInterface
         $roomData['players'][] = $playerInfo;
         $room->data = $roomData;
         $room->save();
-        $this->dispatchUserTurnJob($room, $playerInfo['id']);
+//        $this->dispatchUserTurnJob($room, $playerInfo['id']);
         event(new GameStatusUpdated($room->id));
     }
 

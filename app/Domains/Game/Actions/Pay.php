@@ -43,6 +43,7 @@ class Pay extends PlayerActionsAbstract
             $roomData['flop'][] = array_shift($roomData['cards']);
             $roomData['flop'][] = array_shift($roomData['cards']);
             $roomData['flop'][] = array_shift($roomData['cards']);
+            $roomData['phase'] = 'flop';
             $room->data = $roomData;
             $room->save();
             event(new GameStatusUpdated($room->id));
@@ -53,6 +54,7 @@ class Pay extends PlayerActionsAbstract
             $roomData = $room->data;
             $roomData['turn'] = [];
             $roomData['turn'][] = array_shift($roomData['cards']);
+            $roomData['phase'] = 'turn';
             $room->data = $roomData;
             $room->save();
             event(new GameStatusUpdated($room->id));
@@ -63,9 +65,12 @@ class Pay extends PlayerActionsAbstract
             $roomData = $room->data;
             $roomData['river'] = [];
             $roomData['river'][] = array_shift($roomData['cards']);
+            $roomData['phase'] = 'river';
             $room->data = $roomData;
             $room->save();
             event(new GameStatusUpdated($room->id));
         }
+
+        event(new GameStatusUpdated($room->id));
     }
 }

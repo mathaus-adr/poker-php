@@ -32,7 +32,8 @@ readonly class JoinRoom
             $currentRoom['players'][] = [
                 'id' => $user->id,
                 'name' => $user->name,
-                'cash' => 1000
+                'cash' => 1000,
+                'play_index' => count($currentRoomUsers) + 1
             ];
             RoomUser::create(['room_id' => $room->id, 'user_id' => $user->id]);
             $room->data = $currentRoom;

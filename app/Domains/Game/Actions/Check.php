@@ -4,6 +4,7 @@ namespace App\Domains\Game\Actions;
 
 use App\Domains\Game\PokerGameState;
 use App\Events\GameStatusUpdated;
+use App\Jobs\PlayerTurnJob;
 use App\Models\Room;
 use App\Models\User;
 
@@ -41,6 +42,7 @@ class Check
             $roomData['flop'][] = array_shift($roomData['cards']);
             $roomData['flop'][] = array_shift($roomData['cards']);
             $roomData['flop'][] = array_shift($roomData['cards']);
+            $roomData['phase'] = 'flop';
             $room->data = $roomData;
             $room->save();
             event(new GameStatusUpdated($room->id));
@@ -51,6 +53,7 @@ class Check
             $roomData = $room->data;
             $roomData['turn'] = [];
             $roomData['turn'][] = array_shift($roomData['cards']);
+            $roomData['phase'] = 'turn';
             $room->data = $roomData;
             $room->save();
             event(new GameStatusUpdated($room->id));
@@ -61,6 +64,7 @@ class Check
             $roomData = $room->data;
             $roomData['river'] = [];
             $roomData['river'][] = array_shift($roomData['cards']);
+            $roomData['phase'] = 'river';
             $room->data = $roomData;
             $room->save();
             event(new GameStatusUpdated($room->id));

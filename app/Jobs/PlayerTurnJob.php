@@ -26,6 +26,6 @@ class PlayerTurnJob implements ShouldQueue
      */
     public function handle(): void
     {
-        //
+
     }
 }

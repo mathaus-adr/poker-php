@@ -71,12 +71,9 @@ readonly class StartPokerGame
             0 => $currentRoom['small_blind'],
             ($playerTurns->count() - 1) => $currentRoom['big_blind']
         ]);
-        $play_index = 1;
 
         $playerTurns = $playerTurns->map(function ($player)  use(&$play_index){
             $player['playing_round'] = true;
-            $player['play_index'] = $play_index;
-            $play_index++;
             return $player;
         });
 
@@ -100,7 +97,8 @@ readonly class StartPokerGame
             'current_bet_amount_to_join' => $currentRoom['config']['big_blind_amount'],
             'current_player_to_bet' => $playerTurns->first(),
             'round_started' => true,
-            'cards' => array_merge($currentRoom['flop'], $currentRoom['turn'], $currentRoom['river'])
+            'cards' => array_merge($currentRoom['flop'], $currentRoom['turn'], $currentRoom['river']),
+            'phase' => 'pre-flop',
         ];
 
         $room->data = $data;
