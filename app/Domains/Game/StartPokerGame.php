@@ -110,6 +110,7 @@ readonly class StartPokerGame
                 'user_id' => $playerCards['id']
             ])->update(['user_info' => ['cards' => $playerCards['private_cards']]]);
         }
+
         event(new GameStatusUpdated($room->id));
     }
 }

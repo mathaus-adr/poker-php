@@ -239,4 +239,9 @@ class PokerGameState implements LoadGameStateInterface
     {
         return $this->isShowDown;
     }
+
+    public function getTotalPot(): int
+    {
+        return $this->totalPot ?? 0;
+    }
 }
