@@ -29,15 +29,15 @@ new class extends \Livewire\Volt\Component {
             <div class="flex flex-row gap-4">
                 @if($this->pokerGameState->isShowDown() && $otherPlayer)
                     @foreach($otherPlayer['private_cards'] as $card)
-                        <livewire:gamecard :type="$card['naipe']" :card="$card['carta']"
+                        <livewire:components.gamecard :type="$card['naipe']" :card="$card['carta']"
                                            class="" wire:key="{{$card['naipe'].$card['carta']}}"/>
 
                     @endforeach
                 @endif
 
-                <livewire:gamecard :type="0" :card="0"
+                <livewire:components.gamecard :type="0" :card="0"
                                    class="" wire:key="{{$otherPlayer['id'].$index. '1'}}"/>
-                <livewire:gamecard :type="0" :card="0"
+                <livewire:components.gamecard :type="0" :card="0"
                                    class="" wire:key="{{$otherPlayer['id'].$index. '2'}}"/>
             </div>
             <div

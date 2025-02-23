@@ -17,7 +17,7 @@ new class extends \Livewire\Volt\Component {
         @if($this->pokerGameState->getPlayerCards())
             @foreach($this->pokerGameState->getPlayerCards() as $playerCard)
 
-                <livewire:gamecard :type="$playerCard['naipe']" :card="$playerCard['carta']"
+                <livewire:components.gamecard :type="$playerCard['naipe']" :card="$playerCard['carta']"
                                    class="shadow-lg shadow-inner"
                                    :glow="in_array($playerCard['naipe'].$playerCard['carta'], $this->pokerGameState->getPlayerHand()['cards'] ?? [])"
                                    wire:key="{{$playerCard['naipe'].$playerCard['carta']}}"/>
