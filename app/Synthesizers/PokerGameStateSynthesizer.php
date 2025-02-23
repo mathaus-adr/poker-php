@@ -31,6 +31,7 @@ class PokerGameStateSynthesizer extends Synth
             'playerActualBet' => $target->getPlayerActualBet(),
             'players' => $target->getPlayers(),
             'totalPot' => $target->getTotalPot(),
+            'canStartAGame' => $target->canStartAGame(),
         ], []];
     }
 

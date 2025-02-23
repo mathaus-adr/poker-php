@@ -1,23 +1,48 @@
 <?php
 
 use App\Domains\Game\PokerGameState;
+use App\Models\Room;
 
-new class extends \Livewire\Volt\Component
-{
+new class extends \Livewire\Volt\Component {
     public PokerGameState $pokerGameState;
 
     public function mount($pokerGameState)
     {
         $this->pokerGameState = $pokerGameState;
     }
+
+
+    public function pagar(\App\Domains\Game\Actions\Pay $pay): void
+    {
+        $pay->execute($this->room, auth()->user());
+    }
+
+    public function fold(): void
+    {
+        $fold = app(\App\Domains\Game\Actions\Fold::class);
+        $fold->fold($this->room, auth()->user());
+    }
+
+    public function check(): void
+    {
+        $check = app(\App\Domains\Game\Actions\Check::class);
+        $check->check($this->room, auth()->user());
+    }
+
+    public function startGame(Room $room, \App\Domains\Game\StartPokerGame $startPokerGame): void
+    {
+        $startPokerGame->execute(
+            $this->room
+        );
+    }
 }
-
-
 ?>
 
 <div class="absolute bottom-0 right-0 m-5">
     <div class="flex flex-row mb-5">
-        <button class="btn btn-success" wire:click="startGame">Começar a partida</button>
+        @if($pokerGameState->canStartAGame())
+            <button class="btn btn-success" wire:click="startGame">Começar a partida</button>
+        @endif
     </div>
     <div class="flex flex-row gap-4">
         @if($this->pokerGameState->getPlayerActions())

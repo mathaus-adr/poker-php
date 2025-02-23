@@ -30,15 +30,15 @@ new class extends \Livewire\Volt\Component {
                 @if($this->pokerGameState->isShowDown() && $otherPlayer)
                     @foreach($otherPlayer['private_cards'] as $card)
                         <livewire:components.gamecard :type="$card['naipe']" :card="$card['carta']"
-                                           class="" wire:key="{{$card['naipe'].$card['carta']}}"/>
+                                                      class="" wire:key="{{$card['naipe'].$card['carta']}}"/>
 
                     @endforeach
                 @endif
 
                 <livewire:components.gamecard :type="0" :card="0"
-                                   class="" wire:key="{{$otherPlayer['id'].$index. '1'}}"/>
+                                              class="" wire:key="{{$otherPlayer['id'].$index. '1'}}"/>
                 <livewire:components.gamecard :type="0" :card="0"
-                                   class="" wire:key="{{$otherPlayer['id'].$index. '2'}}"/>
+                                              class="" wire:key="{{$otherPlayer['id'].$index. '2'}}"/>
             </div>
             <div
                 class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{ $this->pokerGameState->getGameStarted() && $this->pokerGameState->isPlayerTurn($otherPlayer['id']) ? 'animate-pulse opacity-20': ''}}">
@@ -49,10 +49,14 @@ new class extends \Livewire\Volt\Component {
                 <div class="avatar translate-x-1 ">
                     <div
                         class="w-16 h-16 content-center text-center rounded-full shrink-0 bg-white ring ring-white ring-offset-base-100 ring-offset-2">
-                                        <span
-                                            class="text-xl ">
+                        @if($this->pokerGameState->isPlayerTurn($otherPlayer['id']))
+                           <livewire:components.turn-coutdown :pokerGameState="$this->pokerGameState"/>
+                        @else
+                            <span
+                                class="text-xl ">
                                             {{Str::of($otherPlayer['name'])->before(' ')->ucfirst()[0]}}
                                         </span>
+                        @endif
                     </div>
                 </div>
                 <div

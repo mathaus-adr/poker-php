@@ -6,7 +6,7 @@ use Livewire\Volt\Component;
 use App\Models\Room;
 use \Illuminate\Support\Facades\Redis;
 use App\Models\User;
-use App\Events\PlayerPrivateCardsEvent;
+
 
 new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
 
@@ -29,14 +29,6 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
         $this->pokerGameState = (new PokerGameState())->load($this->room->id);
     }
 
-    public function startGame(Room $room, \App\Domains\Game\StartPokerGame $startPokerGame): void
-    {
-        $startPokerGame->execute(
-            $this->room
-        );
-    }
-
-
     public function getListeners(): array
     {
         return [
@@ -54,29 +46,11 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
         $this->pokerGameState = (new PokerGameState())->load($this->room->id);
     }
 
-    public function pagar(\App\Domains\Game\Actions\Pay $pay): void
-    {
-        $pay->execute($this->room, auth()->user());
-    }
-
-    public function fold(): void
-    {
-        $fold = app(\App\Domains\Game\Actions\Fold::class);
-        $fold->fold($this->room, auth()->user());
-    }
-
-    public function check(): void
-    {
-        $check = app(\App\Domains\Game\Actions\Check::class);
-        $check->check($this->room, auth()->user());
-    }
-
     public function aumentar($raiseAmount): void
     {
         $raise = app(\App\Domains\Game\Actions\Raise::class);
         $raise->raise($this->room, auth()->user(), $raiseAmount);
     }
-
 };
 
 ?>
@@ -101,12 +75,12 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
     <dialog id="raise_modal" class="modal">
         <div class="modal-box" x-data="{raise_amount : {{$this->pokerGameState->getTotalBetToJoin() * 2}}}">
             <h3 class="text-lg font-bold">Aumentar aposta</h3>
-            <div class="modal-box">
+{{--            <div class="modal-box">--}}
                 <form method="dialog">
                     <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
                 </form>
-            </div>
-            <div class="modal-body m-2">
+{{--            </div>--}}{{----}}
+            <div class="modal-body mt-10">
                 <input type="range" x-on:change="raise_amount = $event.target.value" wire:model="total_raise"
                        min="{{$this->pokerGameState->getTotalBetToJoin() * 2}}"
                        value="{{$this->pokerGameState->getTotalBetToJoin() * 2}}"

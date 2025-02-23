@@ -32,6 +32,8 @@ class PokerGameState implements LoadGameStateInterface
 
     private bool $isShowDown = false;
 
+    private $canStartAGame = false;
+
     public function load(int $roomId): PokerGameState
     {
         $room = Room::findOrFail($roomId);
@@ -74,7 +76,8 @@ class PokerGameState implements LoadGameStateInterface
         ?array $flop,
         ?array $turn,
         ?array $river
-    ): ?array {
+    ): ?array
+    {
         $cards = $this->getAllPlayerCards($flop, $turn, $river);
 
         return app(GetHand::class)->getHand($cards);
@@ -86,8 +89,8 @@ class PokerGameState implements LoadGameStateInterface
     }
 
     /**
-     * @param  array|null  $players
-     * @param  int  $playerId
+     * @param array|null $players
+     * @param int $playerId
      * @return mixed
      */
     public function getPlayerRoomInformation(): ?array
@@ -186,9 +189,9 @@ class PokerGameState implements LoadGameStateInterface
     }
 
     /**
-     * @param  array|null  $flop
-     * @param  array|null  $turn
-     * @param  array|null  $river
+     * @param array|null $flop
+     * @param array|null $turn
+     * @param array|null $river
      * @return array|null
      */
     public function getAllPlayerCards(): ?array
@@ -226,10 +229,9 @@ class PokerGameState implements LoadGameStateInterface
 
     public function allPlayersHaveBet(): bool
     {
-//        $this->player
-
         return true;
     }
+
     public function getTotalBetToJoin(): ?int
     {
         return $this->totalBetToJoin;
@@ -243,5 +245,10 @@ class PokerGameState implements LoadGameStateInterface
     public function getTotalPot(): int
     {
         return $this->totalPot ?? 0;
+    }
+
+    public function canStartAGame(): bool
+    {
+        return !$this->gameStarted && count($this->players) >= 3;
     }
 }
