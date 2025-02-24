@@ -5,7 +5,8 @@ use App\Domains\Game\PokerGameState;
 
 new class extends \Livewire\Volt\Component {
     public PokerGameState $pokerGameState;
-    public int $start = 30;
+    public int $countdown = 7;
+    public $playSound = false;
     public array $otherPlayersPositions = [
         'left-0 top-0 translate-x-32 mt-5 md:translate-x-24', //top left
         'left-0 top-1/2 -translate-y-24 transform-gpu md:translate-x-24', //middle left
@@ -18,23 +19,30 @@ new class extends \Livewire\Volt\Component {
     public function mount($pokerGameState)
     {
         $this->pokerGameState = $pokerGameState;
-        $this->js('$wire.begin()');
     }
-
-    public function begin()
-    {
-        while ($this->start > 0) {
-            $this->start--;
-            sleep(1);
-            $this->stream('count', $this->start, true);
-        }
-    }
-
 }
 
 
 ?>
 
+<div x-data="{countdown: 30}">
+    <span x-text="$wire.countdown"></span>
+    <audio x-ref="countdownsound">
+        <source src="{{ url('audios/countdown.mp3') }}" type="audio/mpeg"/>
+    </audio>
+</div>
 
-<span wire:stream="count">{{ $start }}</span>
+@script
+<script>
+    let number = setInterval(() => {
+        $wire.countdown--
+        if ($wire.countdown === 3) {
+            $refs.countdownsound.play()
+        }
 
+        if ($wire.countdown === 0) {
+            clearInterval(number)
+        }
+    }, 1000)
+</script>
+@endscript

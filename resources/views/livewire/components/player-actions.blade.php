@@ -29,6 +29,12 @@ new class extends \Livewire\Volt\Component {
         $check->check($this->room, auth()->user());
     }
 
+//    public function allin():void
+//    {
+//        $allin = app(\App\Domains\Game\Actions\AllIn::class);
+//        $allin->allin($this->room, auth()->user());
+//    }
+
     public function startGame(Room $room, \App\Domains\Game\StartPokerGame $startPokerGame): void
     {
         $startPokerGame->execute(
@@ -45,8 +51,8 @@ new class extends \Livewire\Volt\Component {
         @endif
     </div>
     <div class="flex flex-row gap-4">
-        @if($this->pokerGameState->getPlayerActions())
-            @foreach($this->pokerGameState->getPlayerActions() as $action)
+        @if($pokerGameState->getPlayerActions() && $pokerGameState->isPlayerTurn(auth()->user()->id))
+            @foreach($pokerGameState->getPlayerActions() as $action)
                 @if($action == 'aumentar')
                     <button class="btn"
                             onclick="raise_modal.showModal()">{{ucfirst($action)}}</button>
