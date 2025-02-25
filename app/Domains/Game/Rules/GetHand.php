@@ -10,7 +10,7 @@ class GetHand
 {
     public function getHand(?array $cards): ?array
     {
-        if (!$cards) {
+        if (!$cards || count($cards) == 0) {
             return null;
         }
 
@@ -45,11 +45,6 @@ class GetHand
 
             $handCalculator = new HandCalculator();
             return $handCalculator->calculateBestHand($cards);
-
-//            return [
-//                'hand' => $hand,
-//                'cards' => $this->mapCards(collect($cards)->shift(5)->toArray())
-//            ];
         }
     }
 

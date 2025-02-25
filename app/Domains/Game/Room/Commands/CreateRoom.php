@@ -2,13 +2,9 @@
 
 namespace App\Domains\Game\Room\Commands;
 
-use App\Commands\CommandExecutedData;
-use App\Commands\CommandExecutionData;
-use App\Commands\CommandInterface;
 use App\Models\Room;
 use App\Models\RoomUser;
 use Exception;
-use Illuminate\Support\Facades\Redis;
 
 readonly class CreateRoom
 {

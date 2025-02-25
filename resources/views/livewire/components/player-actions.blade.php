@@ -5,10 +5,11 @@ use App\Models\Room;
 
 new class extends \Livewire\Volt\Component {
     public PokerGameState $pokerGameState;
-
+    public Room $room;
     public function mount($pokerGameState)
     {
         $this->pokerGameState = $pokerGameState;
+        $this->room = $pokerGameState->getRoom();
     }
 
 

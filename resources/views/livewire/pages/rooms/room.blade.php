@@ -2,6 +2,7 @@
 
 use App\Domains\Game\PokerGameState;
 use App\Models\RoomUser;
+use JetBrains\PhpStorm\NoReturn;
 use Livewire\Volt\Component;
 use App\Models\Room;
 use \Illuminate\Support\Facades\Redis;
@@ -39,6 +40,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
     public function handleRoomEvent($event): void
     {
         $this->loadRoomData();
+        $this->emitSoundByEvent($event);
     }
 
     private function loadRoomData(): void
@@ -50,6 +52,12 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
     {
         $raise = app(\App\Domains\Game\Actions\Raise::class);
         $raise->raise($this->room, auth()->user(), $raiseAmount);
+    }
+
+    #[NoReturn] public function emitSoundByEvent($event): void
+    {
+
+        dd($event);
     }
 };
 

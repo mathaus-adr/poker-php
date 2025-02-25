@@ -2,24 +2,29 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
+use App\Domains\Game\PokerGameState;
+use Illuminate\Broadcasting\InteractsWithBroadcasting;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 class GameStatusUpdated implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use InteractsWithSockets, SerializesModels, InteractsWithBroadcasting;
+
+    public ?int $currentPlayerTurnId;
+    public ?int $lastPlayerFoldedId;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(public int $id)
+    public function __construct(public int $id, public ?string $action = null)
     {
-        //
+        $this->broadcastVia('pusher');
+        $pokerGameState = app(PokerGameState::class)->load($id);
+        $this->currentPlayerTurnId = $pokerGameState->getPlayerTurn()['id'];
+        $this->lastPlayerFoldedId = $pokerGameState->getLastPlayerFolded()['id'] ?? null;
     }
 
     /**

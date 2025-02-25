@@ -32,22 +32,27 @@ class PokerGameState implements LoadGameStateInterface
 
     private bool $isShowDown = false;
 
-    private $canStartAGame = false;
+    private ?array $lastPlayerFolded = null;
+
+    private ?Room $room;
+
+    private ?array $foldedPlayers;
 
     public function load(int $roomId): PokerGameState
     {
-        $room = Room::findOrFail($roomId);
-        $roomData = $room->data;
+        $this->room = Room::findOrFail($roomId);
+        $roomData = $this->room->data;
         $this->players = $roomData['players'] ?? null;
+        $this->foldedPlayers = $roomData['folded_players'] ?? null;
         $this->playerTurn = $roomData['current_player_to_bet'] ?? null;
-        $this->player = collect($this->players)->filter(function ($player) {
+        $this->player = collect($this->players)
+            ->merge($this->foldedPlayers)->filter(function ($player) {
             return $player['id'] === auth()->id();
         })->first();
 
         $this->gameStarted = $roomData['round_started'] ?? false;
-        $this->remnantPlayers = collect($this->getPlayers())->filter(function ($player) {
-            return $player['id'] !== $this->player['id'];
-        })->toArray();
+        $this->remnantPlayers = $this->orderRemnantPlayers();
+        $this->lastPlayerFolded = $roomData['last_player_folded'] ?? null;
 
         if ($this->gameStarted) {
             $this->playerCards = $this->getPlayerPrivateCards();
@@ -61,7 +66,7 @@ class PokerGameState implements LoadGameStateInterface
             $this->playerTotalCash = $this->getPlayerTotalCash();
             $this->playerActualBet = $this->getPlayerActualBet();
             $this->playerActions = app(\App\Domains\Game\Rules\GetPlayerPossibleActions::class)->getActionsForPlayer(
-                $room
+                $this->room
             );
 
             $this->totalBetToJoin = $roomData['current_bet_amount_to_join'] ?? 0;
@@ -78,7 +83,7 @@ class PokerGameState implements LoadGameStateInterface
         ?array $river
     ): ?array
     {
-        $cards = $this->getAllPlayerCards($flop, $turn, $river);
+        $cards = $this->getAllPlayerCards();
 
         return app(GetHand::class)->getHand($cards);
     }
@@ -250,5 +255,37 @@ class PokerGameState implements LoadGameStateInterface
     public function canStartAGame(): bool
     {
         return !$this->gameStarted && count($this->players) >= 3;
+    }
+
+    public function getLastPlayerFolded(): ?array
+    {
+        return $this->lastPlayerFolded;
+    }
+
+    public function foldedPlayers(): ?array
+    {
+        return $this->foldedPlayers;
+    }
+    /**
+     * @return mixed[]
+     */
+    public function orderRemnantPlayers(): array
+    {
+        $players = collect($this->getPlayers())->merge($this->foldedPlayers());
+
+        $greaterPlayersIndexes = collect($players)->filter(function ($player) {
+            return $player['id'] !== $this->player['id'] && $player['play_index'] > $this->player['play_index'];
+        })->toArray();
+
+        $minorPlayerIndexes = collect($players)->filter(function ($player) {
+            return $player['id'] !== $this->player['id'] && $this->player['play_index'] > $player['play_index'];
+        })->toArray();
+
+        return collect()->merge($greaterPlayersIndexes)->merge($minorPlayerIndexes)->values()->toArray();
+    }
+
+    public function getRoom(): ?Room
+    {
+        return $this->room;
     }
 }

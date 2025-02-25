@@ -6,8 +6,8 @@ use App\Domains\Game\PokerGameState;
 new class extends \Livewire\Volt\Component {
     public PokerGameState $pokerGameState;
     public array $otherPlayersPositions = [
-        'left-0 top-0 translate-x-32 mt-5 md:translate-x-24', //top left
-        'left-0 top-1/2 -translate-y-24 transform-gpu md:translate-x-24', //middle left
+        'left-0 top-1/2 -translate-y-24 transform-gpu md:translate-x-24', //top left
+        'left-0 top-0 translate-x-32 mt-5 md:translate-x-24', //middle left
         'right-0 top-0 mt-5 mr-5 md:translate-x-24',//top right
         'top-0 left-1/2 -translate-x-24 transform-gpu', //top middle
         'right-0 top-1/2 -translate-y-24 transform-gpu', //middle right
@@ -25,7 +25,7 @@ new class extends \Livewire\Volt\Component {
 
 <div>
     @foreach($this->pokerGameState->getRemnantPlayers() as $index => $otherPlayer)
-        <div class="absolute {{$otherPlayersPositions[$otherPlayer['play_index']-1]}}">
+        <div class="absolute {{$otherPlayersPositions[$index]}}">
             <div class="flex flex-row gap-4">
                 @if($this->pokerGameState->isShowDown() && $otherPlayer)
                     @foreach($otherPlayer['private_cards'] as $card)
@@ -44,7 +44,7 @@ new class extends \Livewire\Volt\Component {
                 class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{ $this->pokerGameState->getGameStarted() && $this->pokerGameState->isPlayerTurn($otherPlayer['id']) ? 'animate-pulse opacity-20': ''}}">
                 <div
                     class="self-center bg-white translate-x-1 w-20 rounded-l-lg h-8 content-center text-center">
-                    {{$otherPlayer['total_round_bet'] ?? 0}}
+                    {{$otherPlayer['total_round_bet'] ?? 0}} $
                 </div>
                 <div class="avatar translate-x-1 ">
                     <div
@@ -53,7 +53,7 @@ new class extends \Livewire\Volt\Component {
                            <livewire:components.turn-coutdown :pokerGameState="$this->pokerGameState"/>
                         @else
                             <span
-                                class="text-xl ">
+                                class="text-xl">
                                             {{Str::of($otherPlayer['name'])->before(' ')->ucfirst()[0]}}
                                         </span>
                         @endif

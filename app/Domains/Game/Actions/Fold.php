@@ -28,8 +28,9 @@ readonly class Fold
         if (!array_key_exists('folded_players', $roomData)) {
             $roomData['folded_players'] = [];
         }
-        $roomData['folded_players'][] = array_shift($roomData['players']);
-
+        $playerWhoFolded = array_shift($roomData['players']);
+        $roomData['folded_players'][] = $playerWhoFolded;
+        $roomData['last_player_folded'] = $playerWhoFolded;
         $roomData['current_player_to_bet'] = $roomData['players'][0];
 
         $room->data = $roomData;
@@ -68,7 +69,7 @@ readonly class Fold
             $roomData['phase'] = 'flop';
             $room->data = $roomData;
             $room->save();
-            event(new GameStatusUpdated($room->id));
+            broadcast(new GameStatusUpdated($room->id, 'fold'));
             return;
         }
 
@@ -79,7 +80,7 @@ readonly class Fold
             $roomData['phase'] = 'turn';
             $room->data = $roomData;
             $room->save();
-            event(new GameStatusUpdated($room->id));
+            broadcast(new GameStatusUpdated($room->id, 'fold'));
             return;
         }
 
@@ -90,7 +91,7 @@ readonly class Fold
             $roomData['phase'] = 'pre-showdown';
             $room->data = $roomData;
             $room->save();
-            event(new GameStatusUpdated($room->id));
+            broadcast(new GameStatusUpdated($room->id, 'fold'));
         }
         //TODO SE TODOS ESTIVEREM COM O MESMO VALOR APOSTADO E NÃO FOLDARAM, E JÁ FOI REVELADO O FLOP REVELAR O TURN
 
@@ -105,6 +106,6 @@ readonly class Fold
 
 
         //TODO SE TODOS ESTIVEREM COM O MESMO VALOR APOSTADO E NÃO FOLDARAM, E O FLOP E O TURN JÁ FORAM REVELADOS, REVELAR O RIVER
-        event(new GameStatusUpdated($room->id));
+        broadcast(new GameStatusUpdated($room->id, 'fold'));
     }
 }

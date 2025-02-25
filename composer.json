@@ -6,6 +6,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
+        "aws/aws-sdk-php": "^3.339",
         "blade-ui-kit/blade-icons": "^1.6",
         "codeat3/blade-game-icons": "^1.4",
         "davidhsianturi/blade-bootstrap-icons": "^1.4",

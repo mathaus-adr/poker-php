@@ -2,14 +2,10 @@
 
 namespace App\Domains\Game;
 
-use App\Commands\CommandExecutedData;
-use App\Commands\CommandExecutionData;
-use App\Commands\CommandInterface;
 use App\Domains\Game\Cards\Cards;
 use App\Events\GameStatusUpdated;
 use App\Models\Room;
 use App\Models\RoomUser;
-use Illuminate\Support\Facades\Redis;
 
 readonly class StartPokerGame
 {
@@ -111,6 +107,6 @@ readonly class StartPokerGame
             ])->update(['user_info' => ['cards' => $playerCards['private_cards']]]);
         }
 
-        event(new GameStatusUpdated($room->id));
+        broadcast(new GameStatusUpdated($room->id));
     }
 }

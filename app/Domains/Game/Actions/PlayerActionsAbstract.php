@@ -6,8 +6,7 @@ use App\Events\GameStatusUpdated;
 use App\Jobs\PlayerTurnJob;
 use App\Models\Room;
 use App\Models\User;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Redis;
+
 
 abstract class PlayerActionsAbstract implements PlayerActionInterface
 {
@@ -27,7 +26,7 @@ abstract class PlayerActionsAbstract implements PlayerActionInterface
             return false;
         }
 
-        Cache::store('redis')->delete('room:'.$room->id.':player:'.$user->id.':waiting');
+//        Cache::store('redis')->delete('room:'.$room->id.':player:'.$user->id.':waiting');
         return true;
     }
 
