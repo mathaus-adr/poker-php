@@ -4,6 +4,7 @@ use App\Domains\Game\PokerGameState;
 
 
 new class extends \Livewire\Volt\Component {
+    #[\Livewire\Attributes\Reactive]
     public PokerGameState $pokerGameState;
     public array $otherPlayersPositions = [
         'left-0 top-1/2 -translate-y-24 transform-gpu md:translate-x-24', //top left

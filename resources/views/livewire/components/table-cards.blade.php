@@ -4,6 +4,7 @@ use App\Domains\Game\PokerGameState;
 
 
 new class extends \Livewire\Volt\Component {
+    #[\Livewire\Attributes\Reactive]
     public PokerGameState $pokerGameState;
 
     public function mount($pokerGameState)

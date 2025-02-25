@@ -6,6 +6,7 @@ use App\Commands\CommandExecutionData;
 use App\Domains\Game\PokerGameState;
 use App\Domains\Game\StartPokerGame;
 use App\Events\GameStatusUpdated;
+use App\Jobs\RestartGame;
 use App\Models\Room;
 use App\Models\User;
 
@@ -55,7 +56,8 @@ readonly class Fold
             $room->data = $roomData;
             $room->save();
 
-            app(StartPokerGame::class)->execute($room->refresh());
+            RestartGame::dispatch($room->refresh())->delay(now()->addSeconds(5));
+//            app(StartPokerGame::class)->execute($room->refresh());
         }
 
         //TODO SE TODOS ESTIVEREM COM O MESMO VALOR APOSTADO E NÃO FOLDARAM, REVELAR O FLOP

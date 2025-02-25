@@ -107,6 +107,6 @@ readonly class StartPokerGame
             ])->update(['user_info' => ['cards' => $playerCards['private_cards']]]);
         }
 
-        broadcast(new GameStatusUpdated($room->id));
+        broadcast(new GameStatusUpdated($room->id, 'start_game'));
     }
 }

@@ -23,18 +23,18 @@ new class extends \Livewire\Volt\Component {
     </audio>
 </div>
 
-@script
-<script>
+{{--@script--}}
+{{--<script>--}}
 
-    let number = setInterval(() => {
-        $wire.countdown--
-        if ($wire.countdown === 3) {
-            $refs.countdownsound.play()
-        }
+{{--    let number = setInterval(() => {--}}
+{{--        $wire.countdown----}}
+{{--        if ($wire.countdown === 3) {--}}
+{{--            $refs.countdownsound.play()--}}
+{{--        }--}}
 
-        if ($wire.countdown === 0) {
-            clearInterval(number)
-        }
-    }, 1000)
-</script>
-@endscript
+{{--        if ($wire.countdown === 0) {--}}
+{{--            clearInterval(number)--}}
+{{--        }--}}
+{{--    }, 1000)--}}
+{{--</script>--}}
+{{--@endscript--}}

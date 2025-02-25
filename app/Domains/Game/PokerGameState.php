@@ -269,7 +269,7 @@ class PokerGameState implements LoadGameStateInterface
     /**
      * @return mixed[]
      */
-    public function orderRemnantPlayers(): array
+    public function orderRemnantPlayers(): ?array
     {
         $players = collect($this->getPlayers())->merge($this->foldedPlayers());
 
