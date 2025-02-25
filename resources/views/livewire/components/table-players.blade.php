@@ -1,6 +1,7 @@
 <?php
 
 use App\Domains\Game\PokerGameState;
+use Livewire\Attributes\On;
 
 
 new class extends \Livewire\Volt\Component {
@@ -14,10 +15,18 @@ new class extends \Livewire\Volt\Component {
         'right-0 top-1/2 -translate-y-24 transform-gpu', //middle right
         'bottom-0 left-1/2'
     ];
+    public ?int $countdown;
 
     public function mount($pokerGameState)
     {
         $this->pokerGameState = $pokerGameState;
+        $this->countdown = $pokerGameState->getCountdown();
+    }
+
+    #[On('reset-countdown')]
+    public function resetCountDown()
+    {
+        $this->countdown = $this->pokerGameState->getCountdown();
     }
 }
 
@@ -51,7 +60,9 @@ new class extends \Livewire\Volt\Component {
                     <div
                         class="w-16 h-16 content-center text-center rounded-full shrink-0 bg-white ring ring-white ring-offset-base-100 ring-offset-2">
                         @if($this->pokerGameState->isPlayerTurn($otherPlayer['id']))
-                           <livewire:components.turn-coutdown :pokerGameState="$this->pokerGameState"/>
+                            <livewire:components.turn-coutdown :pokerGameState="$this->pokerGameState"
+                                                               :countdown="$pokerGameState->getCountdown()"
+                                                               :key="'countdown-'.$otherPlayer['id']"/>
                         @else
                             <span
                                 class="text-xl">

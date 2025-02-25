@@ -28,6 +28,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
         }
 
         $this->pokerGameState = (new PokerGameState())->load($this->room->id);
+        $countdown = $this->room->updated_at->diffInSeconds(now()->addSeconds(30));
     }
 
     public function getListeners(): array
@@ -42,6 +43,9 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
         $this->loadRoomData();
         $this->emitSoundByEvent($event);
         $this->dispatch('update-room-data');
+        if (!is_null($event['action'])) {
+            $this->dispatch('reset-countdown');
+        }
     }
 
     private function loadRoomData(): void
@@ -93,6 +97,11 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
 <script>
     $wire.on('play-fold-sound', function () {
         let audio = new Audio('{{ url('audios/death.mp3') }}');
+        audio.play();
+    });
+
+    $wire.on('play-countdown-sound', function () {
+        let audio = new Audio('{{ url('audios/countdown.mp3') }}');
         audio.play();
     });
 </script>

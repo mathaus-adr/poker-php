@@ -4,12 +4,22 @@ use App\Domains\Game\PokerGameState;
 
 
 new class extends \Livewire\Volt\Component {
+    #[\Livewire\Attributes\Reactive]
     public PokerGameState $pokerGameState;
-    public int $countdown = 6;
-    public $playSound = false;
-    public function mount($pokerGameState)
+//    public ?int $countdown;
+//    #[\Livewire\Attributes\Modelable]
+    public int $playerTimer;
+
+    public function mount($pokerGameState, $countdown)
     {
         $this->pokerGameState = $pokerGameState;
+        $this->playerTimer = $countdown;
+    }
+
+    #[\Livewire\Attributes\On('reset-countdown')]
+    public function resetCountDown()
+    {
+        $this->playerTimer = 30;
     }
 }
 
@@ -17,24 +27,26 @@ new class extends \Livewire\Volt\Component {
 ?>
 
 <div>
-    <span x-text="$wire.countdown"></span>
-    <audio x-ref="countdownsound">
-        <source src="{{ url('audios/countdown.mp3') }}" type="audio/mpeg"/>
-    </audio>
+    <span x-text="$wire.playerTimer" wire:model="playerTimer"></span>
 </div>
 
-{{--@script--}}
-{{--<script>--}}
+@script
+<script>
+    let number = setInterval(() => {
 
-{{--    let number = setInterval(() => {--}}
-{{--        $wire.countdown----}}
-{{--        if ($wire.countdown === 3) {--}}
-{{--            $refs.countdownsound.play()--}}
-{{--        }--}}
+        if ($wire.playerTimer <= 0) {
+            clearInterval(number)
+            return;
+        }
 
-{{--        if ($wire.countdown === 0) {--}}
-{{--            clearInterval(number)--}}
-{{--        }--}}
-{{--    }, 1000)--}}
-{{--</script>--}}
-{{--@endscript--}}
+        $wire.playerTimer--
+
+        if ($wire.playerTimer === 3) {
+            $wire.dispatch('play-countdown-sound')
+        }
+
+
+    }, 1000)
+
+</script>
+@endscript

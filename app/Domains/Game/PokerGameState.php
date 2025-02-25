@@ -37,6 +37,7 @@ class PokerGameState implements LoadGameStateInterface
     private ?Room $room;
 
     private ?array $foldedPlayers;
+    private ?int $countdown = null;
 
     public function load(int $roomId): PokerGameState
     {
@@ -47,8 +48,8 @@ class PokerGameState implements LoadGameStateInterface
         $this->playerTurn = $roomData['current_player_to_bet'] ?? null;
         $this->player = collect($this->players)
             ->merge($this->foldedPlayers)->filter(function ($player) {
-            return $player['id'] === auth()->id();
-        })->first();
+                return $player['id'] === auth()->id();
+            })->first();
 
         $this->gameStarted = $roomData['round_started'] ?? false;
         $this->remnantPlayers = $this->orderRemnantPlayers();
@@ -72,6 +73,18 @@ class PokerGameState implements LoadGameStateInterface
             $this->totalBetToJoin = $roomData['current_bet_amount_to_join'] ?? 0;
             $this->totalPot = $roomData['total_pot'] ?? 0;
             $this->isShowDown = $roomData['is_showdown'] ?? false;
+
+            $carbonDate = $this->room->updated_at->clone();
+            $carbonDate->addSeconds(30);
+
+            $secondsDiff = now()->diffInSeconds($carbonDate);
+            $this->countdown = $secondsDiff;
+            if ($secondsDiff > 30) {
+                $this->countdown = 0;
+            } else {
+                $this->countdown = $secondsDiff;
+            }
+//            $this->countdown = now()->addSeconds(30)->diffInSeconds($this->room->updated_at);
         }
 
         return $this;
@@ -266,6 +279,7 @@ class PokerGameState implements LoadGameStateInterface
     {
         return $this->foldedPlayers;
     }
+
     /**
      * @return mixed[]
      */
@@ -287,5 +301,10 @@ class PokerGameState implements LoadGameStateInterface
     public function getRoom(): ?Room
     {
         return $this->room;
+    }
+
+    public function getCountdown(): ?int
+    {
+        return $this->countdown;
     }
 }
