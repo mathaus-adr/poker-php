@@ -7,6 +7,7 @@ new class extends \Livewire\Volt\Component {
     #[\Livewire\Attributes\Reactive]
     public PokerGameState $pokerGameState;
     public Room $room;
+
     public function mount($pokerGameState)
     {
         $this->pokerGameState = $pokerGameState;
@@ -14,28 +15,22 @@ new class extends \Livewire\Volt\Component {
     }
 
 
-    public function pagar(\App\Domains\Game\Actions\Pay $pay): void
+    public function pagar(\App\Domains\Game\Player\Actions\Pay $pay): void
     {
         $pay->execute($this->room, auth()->user());
     }
 
     public function fold(): void
     {
-        $fold = app(\App\Domains\Game\Actions\Fold::class);
+        $fold = app(\App\Domains\Game\Player\Actions\Fold::class);
         $fold->fold($this->room, auth()->user());
     }
 
     public function check(): void
     {
-        $check = app(\App\Domains\Game\Actions\Check::class);
+        $check = app(\App\Domains\Game\Player\Actions\Check::class);
         $check->check($this->room, auth()->user());
     }
-
-//    public function allin():void
-//    {
-//        $allin = app(\App\Domains\Game\Actions\AllIn::class);
-//        $allin->allin($this->room, auth()->user());
-//    }
 
     public function startGame(Room $room, \App\Domains\Game\StartPokerGame $startPokerGame): void
     {

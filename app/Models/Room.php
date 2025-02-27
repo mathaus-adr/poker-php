@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Room extends Model
@@ -17,8 +19,23 @@ class Room extends Model
         'data' => 'array'
     ];
 
-    protected function user(): BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function round(): HasOne
+    {
+        return $this->hasOne(RoomRound::class)->where('phase', '!=', 'end')->latest();
+    }
+
+    public function roomUsers(): HasMany
+    {
+        return $this->hasMany(RoomUser::class);
+    }
+
+    public function actions()
+    {
+        return $this->hasManyThrough(RoundAction::class, RoomRound::class, 'room_id', 'room_round_id');
     }
 }

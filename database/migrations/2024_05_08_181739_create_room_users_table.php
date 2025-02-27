@@ -18,6 +18,9 @@ return new class extends Migration
             $table->foreignIdFor(Room::class, 'room_id');
             $table->unique(['room_id', 'user_id']);
             $table->json('user_info')->nullable();
+            $table->enum('status', ['active', 'inactive', 'rejoin'])->default('active');
+            $table->integer('play_index')->index();
+            $table->unsignedBigInteger('cash')->default(1000);
             $table->timestamps();
         });
     }

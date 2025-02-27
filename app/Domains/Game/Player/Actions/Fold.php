@@ -1,14 +1,16 @@
 <?php
 
-namespace App\Domains\Game\Actions;
+namespace app\Domains\Game\Player\Actions;
 
-use App\Commands\CommandExecutionData;
 use App\Domains\Game\PokerGameState;
-use App\Domains\Game\StartPokerGame;
 use App\Events\GameStatusUpdated;
 use App\Jobs\RestartGame;
 use App\Models\Room;
+use App\Models\RoomRound;
+use App\Models\RoundAction;
+use App\Models\RoundPlayer;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 readonly class Fold
 {
@@ -18,25 +20,18 @@ readonly class Fold
 
     public function fold(Room $room, User $user): void
     {
-        $this->pokerGameState->load($room->id);
+        $this->pokerGameState->load($room->id, $user);
 
         if (!$this->pokerGameState->isPlayerTurn($user->id)) {
             return;
         }
 
-        $roomData = $room->data;
-
-        if (!array_key_exists('folded_players', $roomData)) {
-            $roomData['folded_players'] = [];
-        }
-        $playerWhoFolded = array_shift($roomData['players']);
-        $roomData['folded_players'][] = $playerWhoFolded;
-        $roomData['last_player_folded'] = $playerWhoFolded;
-        $roomData['current_player_to_bet'] = $roomData['players'][0];
-
-        $room->data = $roomData;
-        $room->save();
-
+        $round = $room->round;
+        $roundPlayer = $this->getRoundPlayer($round, $user);
+        $this->inactivePlayerInRound($roundPlayer);
+        $this->storeRoundAction($user, $round);
+        $this->setNextPlayerToPlay($round, $roundPlayer);
+        $round->refresh();
         $this->checkGameStatus($room);
     }
 
@@ -53,11 +48,11 @@ readonly class Fold
                 $player['total_round_bet'] = 0;
                 return $player;
             });
+            $roomData['folded_players'] = [];
             $room->data = $roomData;
             $room->save();
-
+            $room->updateQuietly(['play_identifier' => null]);
             RestartGame::dispatch($room->refresh())->delay(now()->addSeconds(5));
-//            app(StartPokerGame::class)->execute($room->refresh());
         }
 
         //TODO SE TODOS ESTIVEREM COM O MESMO VALOR APOSTADO E NÃO FOLDARAM, REVELAR O FLOP
@@ -109,5 +104,51 @@ readonly class Fold
 
         //TODO SE TODOS ESTIVEREM COM O MESMO VALOR APOSTADO E NÃO FOLDARAM, E O FLOP E O TURN JÁ FORAM REVELADOS, REVELAR O RIVER
         broadcast(new GameStatusUpdated($room->id, 'fold'));
+    }
+
+    private function inactivePlayerInRound(RoundPlayer $roundPlayer): void
+    {
+        $roundPlayer->update(['status' => false]);
+    }
+
+    private function storeRoundAction(User $user, RoomRound $round): void
+    {
+        RoundAction::create(
+            [
+                'room_round_id' => $round->id,
+                'user_id' => $user->id,
+                'amount' => 0,
+                'action' => 'fold'
+            ]
+        );
+        $round->update(['total_players_in_round' => DB::raw('total_players_in_round - 1')]);
+    }
+
+    private function setNextPlayerToPlay(RoomRound $round, RoundPlayer $roundPlayer): void
+    {
+        $nextPlayerWithHighOrder = RoundPlayer::where('room_round_id', $round->id)
+            ->where('status', true)
+            ->where('order', '>', $roundPlayer->order)
+            ->first();
+
+        if ($nextPlayerWithHighOrder) {
+            $round->update(['player_turn_id' => $nextPlayerWithHighOrder->user_id]);
+            return;
+        }
+
+        $nextPlayerWithMinorOrder = RoundPlayer::where('room_round_id', $round->id)
+            ->where('status', true)->where('order', '>=', 1)->first();
+
+        if ($nextPlayerWithMinorOrder) {
+            $round->update(['player_turn_id' => $nextPlayerWithMinorOrder->user_id]);
+        }
+    }
+
+    private function getRoundPlayer(RoomRound $round, User $user): RoundPlayer
+    {
+        return RoundPlayer::where([
+            'room_round_id' => $round->id,
+            'user_id' => $user->id
+        ])->first();
     }
 }

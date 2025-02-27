@@ -1,7 +1,7 @@
 <?php
 
-use Livewire\Volt\Component;
 use App\Models\Room;
+use Livewire\Volt\Component;
 
 new class extends Component {
     use \Livewire\WithPagination;
@@ -15,18 +15,18 @@ new class extends Component {
 
     public function join(Room $room)
     {
-        app(\App\Domains\Game\Room\Commands\JoinRoom::class)->execute(auth()->user(), $room);
-        $this->redirectIntended(default: '/room/'.$room->id, navigate: true);
+        app(\App\Domains\Game\Room\Actions\JoinRoom::class)->execute(auth()->user(), $room);
+        $this->redirectIntended(default: '/room/' . $room->id, navigate: true);
     }
 
     public function create()
     {
-        $room = app(\App\Domains\Game\Room\Commands\CreateRoom::class)->execute();
+        $room = app(\App\Domains\Game\Room\Actions\CreateRoom::class)->execute(auth()->user());
         if (!$room) {
             return;
         }
 
-        $this->redirectIntended(default: '/room/'.$room->id, navigate: true);
+        $this->redirectIntended(default: '/room/' . $room->id, navigate: true);
     }
 };
 ?>
@@ -42,7 +42,8 @@ new class extends Component {
         @if($errors->get('room_created'))
             @foreach ((array) $errors->get('room_created') as $message)
                 <div role="alert" class="alert alert-error col-span-12">
-                    <x-css-info/> <span class="font-mono text-center">{{$message}}</span>
+                    <x-css-info/>
+                    <span class="font-mono text-center">{{$message}}</span>
                 </div>
             @endforeach
         @endif

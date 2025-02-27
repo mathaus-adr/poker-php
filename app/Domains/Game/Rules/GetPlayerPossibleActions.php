@@ -3,16 +3,17 @@
 namespace App\Domains\Game\Rules;
 
 use App\Models\Room;
+use App\Models\User;
 
 class GetPlayerPossibleActions
 {
-    public function getActionsForPlayer(Room $room): ?array
+    public function getActionsForPlayer(Room $room, ?User $user = null): ?array
     {
         if ($room->data === null) {
             return null;
         }
 
-        $playerInfo = collect($room->data['players'])->firstWhere('id', auth()->user()->id);
+        $playerInfo = collect($room->data['players'])->firstWhere('id', $user?->id ?? auth()->user()->id);
 
         if ($playerInfo === null) {
             return null;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Game\Room\Commands;
+namespace App\Domains\Game\Room\Actions;
 
 use App\Events\GameStatusUpdated;
 use App\Models\Room;
@@ -11,7 +11,7 @@ readonly class JoinRoom
 {
     public function execute(User $user, Room $room)
     {
-       $currentRoomUsers = $room->data['players'];
+        $currentRoomUsers = $room->data['players'];
 
         $isOnRoom = collect($currentRoomUsers)->filter(function ($roomUser) use ($user) {
             if ($roomUser['id'] == $user['id']) {
@@ -27,12 +27,11 @@ readonly class JoinRoom
                 'id' => $user->id,
                 'name' => $user->name,
                 'cash' => 1000,
-                'play_index' => count($currentRoomUsers) + 1
             ];
-            RoomUser::create(['room_id' => $room->id, 'user_id' => $user->id]);
+            RoomUser::create(['room_id' => $room->id, 'user_id' => $user->id, 'play_index' => count($currentRoomUsers) + 1, 'cash' => 1000]);
             $room->data = $currentRoom;
             $room->save();
-            event(new GameStatusUpdated($room->id));
+            event(new GameStatusUpdated($room->id, 'join_room'));
         }
     }
 }

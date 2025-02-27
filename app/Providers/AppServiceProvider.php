@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\RoomRound;
+use App\Observers\RoomRoundObserver;
 use App\Synthesizers\PokerGameStateSynthesizer;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -21,6 +23,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        RoomRound::observe(RoomRoundObserver::class);
     }
 }

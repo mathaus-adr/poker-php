@@ -1,11 +1,13 @@
 <?php
 
-namespace App\Domains\Game\Actions;
+namespace App\Domains\Game\Player\Actions;
 
 use App\Domains\Game\PokerGameState;
 use App\Events\GameStatusUpdated;
-use App\Jobs\PlayerTurnJob;
 use App\Models\Room;
+use App\Models\RoomRound;
+use App\Models\RoundAction;
+use App\Models\RoundPlayer;
 use App\Models\User;
 
 class Check
@@ -16,21 +18,17 @@ class Check
 
     public function check(Room $room, User $user): void
     {
-        $this->pokerGameState->load($room->id);
+        $this->pokerGameState->load($room->id, $user);
 
         if (!$this->pokerGameState->isPlayerTurn($user->id)) {
             return;
         }
 
-        $roomData = $room->data;
-
-        $actualPlayer = array_shift($roomData['players']);
-
-        $roomData['current_player_to_bet'] = $roomData['players'][0];
-        $roomData['players'][] = $actualPlayer;
-        $room->data = $roomData;
-        $room->save();
-
+//        $roomData = $room->data;
+        $round = $room->round;
+        $roundPlayer = $this->getRoundPlayer($round, $user);
+        $this->storeRoundAction($user, $round);
+        $this->setNextPlayerToPlay($round, $roundPlayer);
         $this->checkGameStatus($room->refresh());
     }
 
@@ -69,5 +67,45 @@ class Check
             $room->save();
             event(new GameStatusUpdated($room->id));
         }
+    }
+
+    private function storeRoundAction(User $user, mixed $round)
+    {
+        RoundAction::create(
+            [
+                'room_round_id' => $round->id,
+                'user_id' => $user->id,
+                'amount' => 0,
+                'action' => 'check'
+            ]
+        );
+    }
+
+    private function setNextPlayerToPlay(RoomRound $round, RoundPlayer $roundPlayer): void
+    {
+        $nextPlayerWithHighOrder = RoundPlayer::where('room_round_id', $round->id)
+            ->where('status', true)
+            ->where('order', '>', $roundPlayer->order)
+            ->first();
+
+        if ($nextPlayerWithHighOrder) {
+            $round->update(['player_turn_id' => $nextPlayerWithHighOrder->user_id]);
+            return;
+        }
+
+        $nextPlayerWithMinorOrder = RoundPlayer::where('room_round_id', $round->id)
+            ->where('status', true)->where('order', '>=', 1)->first();
+
+        if ($nextPlayerWithMinorOrder) {
+            $round->update(['player_turn_id' => $nextPlayerWithMinorOrder->user_id]);
+        }
+    }
+
+    private function getRoundPlayer(RoomRound $round, User $user): RoundPlayer
+    {
+        return RoundPlayer::where([
+            'room_round_id' => $round->id,
+            'user_id' => $user->id
+        ])->first();
     }
 }

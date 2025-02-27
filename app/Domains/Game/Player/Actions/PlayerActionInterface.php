@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Game\Actions;
+namespace App\Domains\Game\Player\Actions;
 
 use App\Models\Room;
 use App\Models\User;

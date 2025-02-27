@@ -3,8 +3,10 @@
 namespace App\Domains\Game;
 
 use App\Domains\Game\Rules\GetHand;
+use App\Domains\Game\Rules\GetPlayerPossibleActions;
 use App\Models\Room;
 use App\Models\User;
+use Illuminate\Support\Arr;
 
 class PokerGameState implements LoadGameStateInterface
 {
@@ -36,22 +38,30 @@ class PokerGameState implements LoadGameStateInterface
 
     private ?Room $room;
 
-    private ?array $foldedPlayers;
     private ?int $countdown = null;
+    /**
+     * @var mixed|null
+     */
+    private mixed $playerTurnId;
+    /**
+     * @var mixed[]
+     */
+    private array $roundActions;
 
-    public function load(int $roomId): PokerGameState
+    public function load(int $roomId, ?User $user = null): PokerGameState
     {
-        $this->room = Room::findOrFail($roomId);
+        $this->room = Room::with('roomUsers', 'actions', 'round')->findOrFail($roomId);
+        $round = $this->room->round;
         $roomData = $this->room->data;
-        $this->players = $roomData['players'] ?? null;
-        $this->foldedPlayers = $roomData['folded_players'] ?? null;
-        $this->playerTurn = $roomData['current_player_to_bet'] ?? null;
-        $this->player = collect($this->players)
-            ->merge($this->foldedPlayers)->filter(function ($player) {
-                return $player['id'] === auth()->id();
-            })->first();
-
-        $this->gameStarted = $roomData['round_started'] ?? false;
+        $roomUsers = $this->room->roomUsers;
+//        dd($roomUsers->toArray());
+        $this->players = $roomUsers->toArray() ?? null;
+        $this->playerTurnId = $round?->player_turn_id ?? null;
+        $this->player = collect($this->players)->filter(function ($player) use ($user) {
+            return $player['user_id'] === $user->id;
+        })->first();
+        $this->roundActions = $this->room->actions()->where(['room_round_id' => $round->id])->get()->toArray();
+        $this->gameStarted = !is_null($round);
         $this->remnantPlayers = $this->orderRemnantPlayers();
         $this->lastPlayerFolded = $roomData['last_player_folded'] ?? null;
 
@@ -66,8 +76,9 @@ class PokerGameState implements LoadGameStateInterface
 
             $this->playerTotalCash = $this->getPlayerTotalCash();
             $this->playerActualBet = $this->getPlayerActualBet();
-            $this->playerActions = app(\App\Domains\Game\Rules\GetPlayerPossibleActions::class)->getActionsForPlayer(
-                $this->room
+            $this->playerActions = app(GetPlayerPossibleActions::class)->getActionsForPlayer(
+                $this->room,
+                $user
             );
 
             $this->totalBetToJoin = $roomData['current_bet_amount_to_join'] ?? 0;
@@ -103,7 +114,7 @@ class PokerGameState implements LoadGameStateInterface
 
     private function getPlayerPrivateCards(): ?array
     {
-        return $this->getPlayerRoomInformation()['private_cards'] ?? null;
+        return Arr::get($this->player, 'user_info.cards');
     }
 
     /**
@@ -114,13 +125,13 @@ class PokerGameState implements LoadGameStateInterface
     public function getPlayerRoomInformation(): ?array
     {
         return collect($this->getPlayers())->filter(function ($player) {
-            return $player['id'] === $this->player['id'];
+            return $player['user_id'] === $this->player['user_id'];
         })->first();
     }
 
     public function getPlayerTotalCash(): ?int
     {
-        return $this->getPlayerRoomInformation()['cash'] ?? null;
+        return $this->player['cash'] ?? null;
     }
 
     public function getPlayers(): ?array
@@ -180,7 +191,7 @@ class PokerGameState implements LoadGameStateInterface
 
     public function isPlayerTurn(int $playerId): bool
     {
-        return $this->playerTurn['id'] === $playerId;
+        return $this->playerTurnId === $playerId;
     }
 
     public function getGameStarted(): bool
@@ -233,16 +244,18 @@ class PokerGameState implements LoadGameStateInterface
 
     public function isAllPlayersWithSameBet(): bool
     {
-        $firstPlayer = $this->players[0];
-        $firstPlayerBet = $firstPlayer['total_round_bet'];
-
-        foreach ($this->players as $player) {
-            if ($player['total_round_bet'] !== $firstPlayerBet) {
-                return false;
+        $actionsCollection = collect($this->roundActions);
+        $actionsGroupedByIdCollection = $actionsCollection->groupBy('user_id');
+        $firstPlayerTotalBet = $actionsGroupedByIdCollection->shift()->sum('amount');
+        $allPlayersWithSameBet = true;
+        $actionsGroupedByIdCollection->each(function ($playerActions) use ($firstPlayerTotalBet, &$allPlayersWithSameBet) {
+            $playerTotalBet = $playerActions->sum('amount');
+            if ($playerTotalBet !== $firstPlayerTotalBet) {
+                $allPlayersWithSameBet = false;
             }
-        }
+        });
 
-        return true;
+        return $allPlayersWithSameBet;
     }
 
     public function allPlayersHaveBet(): bool
@@ -275,27 +288,22 @@ class PokerGameState implements LoadGameStateInterface
         return $this->lastPlayerFolded;
     }
 
-    public function foldedPlayers(): ?array
-    {
-        return $this->foldedPlayers;
-    }
-
     /**
      * @return mixed[]
      */
     public function orderRemnantPlayers(): ?array
     {
-        $players = collect($this->getPlayers())->merge($this->foldedPlayers());
+        $players = collect($this->getPlayers());
 
         $greaterPlayersIndexes = collect($players)->filter(function ($player) {
-            return $player['id'] !== $this->player['id'] && $player['play_index'] > $this->player['play_index'];
+            return $player['user_id'] !== $this->player['user_id'] && $player['play_index'] > $this->player['play_index'];
         })->toArray();
 
         $minorPlayerIndexes = collect($players)->filter(function ($player) {
-            return $player['id'] !== $this->player['id'] && $this->player['play_index'] > $player['play_index'];
+            return $player['user_id'] !== $this->player['user_id'] && $this->player['play_index'] > $player['play_index'];
         })->toArray();
 
-        return collect()->merge($greaterPlayersIndexes)->merge($minorPlayerIndexes)->values()->toArray();
+        return collect()->merge($greaterPlayersIndexes)->merge($minorPlayerIndexes)->unique('id')->values()->toArray();
     }
 
     public function getRoom(): ?Room

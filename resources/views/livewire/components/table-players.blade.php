@@ -46,12 +46,12 @@ new class extends \Livewire\Volt\Component {
                 @endif
 
                 <livewire:components.gamecard :type="0" :card="0"
-                                              class="" wire:key="{{$otherPlayer['id'].$index. '1'}}"/>
+                                              class="" wire:key="{{$otherPlayer['user_id'].$index. '1'}}"/>
                 <livewire:components.gamecard :type="0" :card="0"
-                                              class="" wire:key="{{$otherPlayer['id'].$index. '2'}}"/>
+                                              class="" wire:key="{{$otherPlayer['user_id'].$index. '2'}}"/>
             </div>
             <div
-                class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{ $this->pokerGameState->getGameStarted() && $this->pokerGameState->isPlayerTurn($otherPlayer['id']) ? 'animate-pulse opacity-20': ''}}">
+                class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{ $this->pokerGameState->getGameStarted() && $this->pokerGameState->isPlayerTurn($otherPlayer['user_id']) ? 'animate-pulse opacity-20': ''}}">
                 <div
                     class="self-center bg-white translate-x-1 w-20 rounded-l-lg h-8 content-center text-center">
                     {{$otherPlayer['total_round_bet'] ?? 0}} $
@@ -59,10 +59,10 @@ new class extends \Livewire\Volt\Component {
                 <div class="avatar translate-x-1 ">
                     <div
                         class="w-16 h-16 content-center text-center rounded-full shrink-0 bg-white ring ring-white ring-offset-base-100 ring-offset-2">
-                        @if($this->pokerGameState->isPlayerTurn($otherPlayer['id']))
+                        @if($this->pokerGameState->isPlayerTurn($otherPlayer['user_id']))
                             <livewire:components.turn-coutdown :pokerGameState="$this->pokerGameState"
                                                                :countdown="$pokerGameState->getCountdown()"
-                                                               :key="'countdown-'.$otherPlayer['id']"/>
+                                                               :key="'countdown-'.$otherPlayer['user_id']"/>
                         @else
                             <span
                                 class="text-xl">

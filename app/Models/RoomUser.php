@@ -11,7 +11,8 @@ class RoomUser extends Model
 
     protected $fillable = [
         'user_id',
-        'room_id'
+        'room_id',
+        'play_index'
     ];
 
     protected $casts = [
