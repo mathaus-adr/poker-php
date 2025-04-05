@@ -50,7 +50,7 @@ new class extends Component {
 
         @foreach($rooms as $room)
             <div class="card col-span-4 w-96 bg-gray-900">
-                <div class="card-body">
+                <div class="card-body text-gray-500 text-xl">
                     <h2 class="card-title"> Sala {{$room->id}} </h2>
                     <p>Poker Texas Hold'em</p>
                     <div class="card-actions justify-end">
@@ -66,11 +66,10 @@ new class extends Component {
     </div>
 
 
-    <div class="join justify-items-center col-span-12">
-        <button type="button" class="join-item btn">1</button>
-        <button type="button" class="join-item btn">2</button>
-        <button type="button" class="join-item btn">3</button>
-        <button type="button" class="join-item btn">4</button>
-    </div>
-
+{{--    <div class="join justify-items-center col-span-12">--}}
+{{--        <button type="button" class="join-item btn">1</button>--}}
+{{--        <button type="button" class="join-item btn">2</button>--}}
+{{--        <button type="button" class="join-item btn">3</button>--}}
+{{--        <button type="button" class="join-item btn">4</button>--}}
+{{--    </div>--}}
 </div>

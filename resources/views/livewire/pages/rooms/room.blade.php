@@ -75,9 +75,9 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
         <div class=" shadow-sm sm:rounded-lg">
 
             <div class="grid grid-cols-12 gap-1">
-                <div class="col-span-12 rounded-xl">
+                <div class="col-span-12 rounded-xl h-screen">
 
-                    <div class="relative bg-green-800 h-screen w-full rounded-lg">
+                    <div class="relative bg-green-800 h-5/6 w-full rounded-lg">
                         <livewire:components.table-players :pokerGameState="$pokerGameState"
                                                            wire:key="table-players" wire:model="pokerGameState"/>
                         <livewire:components.table-cards :pokerGameState="$pokerGameState"

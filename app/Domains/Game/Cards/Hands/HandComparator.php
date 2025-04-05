@@ -19,9 +19,11 @@ class HandComparator
     }
 
 
-    public function execute(RoomRound $round): void
+    public function execute(RoomRound $round): array
     {
-        $roundActivePlayers = RoundPlayer::query()->where('room_round_id', $round->id)->where('status', '=', true)
+        $roundActivePlayers = RoundPlayer::query()
+            ->where('room_round_id', $round->id)
+            ->where('status', '=', true)
             ->get();
 
         $playersHands = [];
@@ -51,7 +53,7 @@ class HandComparator
             $playersHands[] = array_merge($this->getHand->getHand($playerCards), ['user_id' => $roundPlayer->user_id]);
         }
 
-        $this->getStrongestHand($playersHands);
+        return $this->getStrongestHand($playersHands);
     }
 
     private function getStrongestHand(array $playersHands): array
@@ -65,7 +67,7 @@ class HandComparator
         });
 
         $groupedStrongestHand = $groupedStrongestHandOriginalCollection->first();
-        //Ja possuo a mão mais forte, agora preciso verificar se há empate ou qual é a carta mais forte
+        //Ja possuo as mãos mais fortes, agora preciso verificar se há empate ou qual é a carta mais forte
         if ($groupedStrongestHand->count() > 1) {
 
             $strongestHandNameValue = $groupedStrongestHandOriginalCollection->keys()->first();
@@ -88,12 +90,31 @@ class HandComparator
                     return $groupedStrongestHandData;
                 });
 
-                $strongestHands = $groupedStrongestHandWithScore->sortByDesc('score')->groupBy('score');
-
-                dd($strongestHands->first());
+                $groupedStrongestHand = $groupedStrongestHandWithScore->sortByDesc('score');
             }
+
+            if ($strongestHandNameValue == Hands::OnePair->value) {
+                $groupedStrongestHandWithScore = $groupedStrongestHand->map(function ($groupedStrongestHandData) {
+                    $cardValue = Str::replace(
+                        [Suit::Diamonds->name, Suit::Clubs->name, Suit::Hearts->name, Suit::Spades->name],
+                        '',
+                        $groupedStrongestHandData['cards'][0]);
+
+                    if ($cardValue == Card::Ace->value) {
+                        $groupedStrongestHandData['score'] = 14 * 2;
+                        return $groupedStrongestHandData;
+                    }
+
+                    $groupedStrongestHandData['score'] = (int) $cardValue * 2;
+
+                    return $groupedStrongestHandData;
+                });
+
+                $groupedStrongestHand = $groupedStrongestHandWithScore->sortByDesc('score');
+            }
+
         }
 
-        dd($groupedStrongestHand);
+        return $groupedStrongestHand->first();
     }
 }

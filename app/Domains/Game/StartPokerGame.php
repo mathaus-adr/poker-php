@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
 
 readonly class StartPokerGame
 {
-    public function __construct()
+    public function __construct(private ?string $shuffleSeed = null)
     {
     }
 
@@ -23,7 +23,7 @@ readonly class StartPokerGame
         $currentRoom = $room->data;
         $gameCards = Cards::getCards();
         $currentRoom['round_started'] = true;
-        $currentRoom['cards'] = collect($gameCards)->shuffle()->toArray();
+        $currentRoom['cards'] = collect($gameCards)->shuffle($this->shuffleSeed)->toArray();
 
         $currentRoom['round_players'] = RoomUser::where('room_id', $room->id)->get()->toArray();
 

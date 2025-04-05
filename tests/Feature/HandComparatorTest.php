@@ -1,5 +1,6 @@
 <?php
 
+use App\Domains\Game\Cards\Enums\Hands;
 use App\Domains\Game\Cards\Hands\HandComparator;
 use App\Domains\Game\PokerGameState;
 use App\Domains\Game\Room\Actions\CreateRoom;
@@ -37,7 +38,7 @@ beforeEach(function () {
         ]);
     }
 
-    $startPokerGameAction = app(StartPokerGame::class);
+    $startPokerGameAction = app(StartPokerGame::class, ['shuffleSeed' => 2]);
 
     Event::fakeFor(callable: function () use ($startPokerGameAction, $room) {
         $startPokerGameAction->execute($room);
@@ -75,7 +76,15 @@ beforeEach(function () {
     $this->assertNull($pokerGameState->getLastPlayerFolded());
 });
 
-
-it('should declare the strongest hand from table', function () {
-    app(HandComparator::class)->execute(RoomRound::first());
+it('should declare the strongest hand from table when init a game', function () {
+    $strongestHandUserId = 4;
+    $score = 22;
+    $cardCount = 2;
+    $result = app(HandComparator::class)->execute(RoomRound::first());
+    $this->assertNotNull($result);
+    $this->assertEquals(Hands::OnePair->value, $result['hand']);
+    $this->assertEquals($strongestHandUserId, $result['user_id']);
+    $this->assertEquals($score, $result['score']);
+    $this->assertIsArray($result['cards']);
+    $this->assertCount($cardCount, $result['cards']);
 });

@@ -17,7 +17,7 @@ new class extends \Livewire\Volt\Component {
 
 <div class="absolute bottom-0 left-1/2 -translate-x-24 transform-gpu">
     <div class="flex flex-row gap-4">
-        @if($this->pokerGameState->getPlayerCards())
+        @if($this->pokerGameState->getGameStarted() && $this->pokerGameState->getPlayerCards())
             @foreach($this->pokerGameState->getPlayerCards() as $playerCard)
 
                 <livewire:components.gamecard :type="$playerCard['naipe']" :card="$playerCard['carta']"
@@ -29,10 +29,12 @@ new class extends \Livewire\Volt\Component {
 
         @endif
     </div>
-    <div class="flex w-full h-8 text-black -translate-x-24 justify-center m-2">
+    @if($this->pokerGameState->getPlayerHand())
+        <div class="flex w-full h-8 text-black -translate-x-24 justify-center m-2">
         <span
-            class="text-xl bg-white text-center self-center rounded-lg p-2 shadow "> {{Hands::get($this->pokerGameState->getPlayerHand()['hand']->value)}}</span>
-    </div>
+            class="text-xl bg-white text-center self-center rounded-lg p-2 shadow "> {{Hands::get($this->pokerGameState->getPlayerHand()['hand']?->value)}}</span>
+        </div>
+    @endif
     <div
         class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{$this->pokerGameState->getGameStarted() && $this->pokerGameState->isPlayerTurn(auth()->user()->id) ? 'animate-pulse opacity-20': ''}}">
 
