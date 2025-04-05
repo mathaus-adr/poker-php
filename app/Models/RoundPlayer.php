@@ -10,6 +10,7 @@ class RoundPlayer extends Model
     protected $guarded = [];
     protected $casts = [
         'status' => 'boolean',
+        'user_info' => 'array',
     ];
 
     public function user(): BelongsTo

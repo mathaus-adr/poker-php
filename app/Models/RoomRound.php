@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,5 +22,10 @@ class RoomRound extends Model
     public function actions(): HasMany
     {
         return $this->hasMany(RoundAction::class);
+    }
+
+    public function roundPlayers(): HasMany
+    {
+        return $this->hasMany(RoundPlayer::class);
     }
 }

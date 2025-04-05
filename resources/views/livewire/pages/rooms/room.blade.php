@@ -27,7 +27,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
             return;
         }
 
-        $this->pokerGameState = (new PokerGameState())->load($this->room->id);
+        $this->pokerGameState = (new PokerGameState())->load($this->room->id, $this->player);
         $countdown = $this->room->updated_at->diffInSeconds(now()->addSeconds(30));
     }
 
@@ -50,7 +50,7 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
 
     private function loadRoomData(): void
     {
-        $this->pokerGameState = (new PokerGameState())->load($this->room->id);
+        $this->pokerGameState = (new PokerGameState())->load($this->room->id, $this->player);
     }
 
 //    public function aumentar($raiseAmount): void

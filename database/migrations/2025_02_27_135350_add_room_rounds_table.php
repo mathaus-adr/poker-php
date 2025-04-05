@@ -24,7 +24,7 @@ return new class extends Migration {
             $table->foreignIdFor(User::class, 'last_player_raised_id')->nullable();
             $table->foreignIdFor(User::class, 'last_player_checked_id')->nullable();
             $table->foreignIdFor(User::class, 'winner_id')->nullable();
-            $table->enum('phase', ['starting','pre_flop', 'flop', 'turn', 'river', 'end'])->nullable();
+            $table->enum('phase', ['pre_flop', 'flop', 'turn', 'river', 'end'])->nullable();
             $table->timestamps();
         });
     }

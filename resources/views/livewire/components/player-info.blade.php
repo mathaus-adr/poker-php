@@ -1,4 +1,6 @@
 <?php
+
+use App\Domains\Game\Cards\Enums\Hands;
 use App\Domains\Game\PokerGameState;
 
 new class extends \Livewire\Volt\Component {
@@ -19,16 +21,21 @@ new class extends \Livewire\Volt\Component {
             @foreach($this->pokerGameState->getPlayerCards() as $playerCard)
 
                 <livewire:components.gamecard :type="$playerCard['naipe']" :card="$playerCard['carta']"
-                                   class="shadow-lg shadow-inner"
-                                   :glow="in_array($playerCard['naipe'].$playerCard['carta'], $this->pokerGameState->getPlayerHand()['cards'] ?? [])"
-                                   wire:key="{{$playerCard['naipe'].$playerCard['carta']}}"/>
+                                              class="shadow-lg shadow-inner"
+                                              :glow="in_array($playerCard['naipe'].$playerCard['carta'], $this->pokerGameState->getPlayerHand()['cards'] ?? [])"
+                                              wire:key="{{$playerCard['naipe'].$playerCard['carta']}}"/>
                 {{--                                                                                {{$playerCard['naipe'].$playerCard['carta'], $hand}}--}}
             @endforeach
 
         @endif
     </div>
+    <div class="flex w-full h-8 text-black -translate-x-24 justify-center m-2">
+        <span
+            class="text-xl bg-white text-center self-center rounded-lg p-2 shadow "> {{Hands::get($this->pokerGameState->getPlayerHand()['hand']->value)}}</span>
+    </div>
     <div
         class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{$this->pokerGameState->getGameStarted() && $this->pokerGameState->isPlayerTurn(auth()->user()->id) ? 'animate-pulse opacity-20': ''}}">
+
         <div
             class="self-center bg-white translate-x-1 w-20 rounded-l-lg h-8 content-center text-center">
             {{$this->pokerGameState->getPlayerActualBet() ?? 0}}

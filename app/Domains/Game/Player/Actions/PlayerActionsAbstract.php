@@ -2,7 +2,6 @@
 
 namespace App\Domains\Game\Player\Actions;
 
-use App\Events\GameStatusUpdated;
 use App\Models\Room;
 use App\Models\User;
 

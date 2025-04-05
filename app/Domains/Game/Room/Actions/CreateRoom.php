@@ -22,7 +22,6 @@ readonly class CreateRoom
             throw new Exception('User already in a room');
         }
 
-
         $userData = [
             'id' => $user->id,
             'name' => $user->name,
@@ -31,7 +30,7 @@ readonly class CreateRoom
 
         $room = Room::create(['user_id' => $user->id, 'data' => ['players' => [$userData]]]);
 
-        RoomUser::create(['room_id' => $room->id, 'user_id' => $user->id, 'user_info' => $userData, 'play_index' => 1, 'cash' => 1000]);
+        RoomUser::create(['room_id' => $room->id, 'user_id' => $user->id, 'user_info' => $userData, 'order' => 1, 'cash' => 1000]);
         return $room;
     }
 }

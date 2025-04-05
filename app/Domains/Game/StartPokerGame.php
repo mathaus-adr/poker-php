@@ -9,6 +9,7 @@ use App\Models\RoomRound;
 use App\Models\RoomUser;
 use App\Models\RoundAction;
 use App\Models\RoundPlayer;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 readonly class StartPokerGame
@@ -24,17 +25,12 @@ readonly class StartPokerGame
         $currentRoom['round_started'] = true;
         $currentRoom['cards'] = collect($gameCards)->shuffle()->toArray();
 
-        if (!key_exists('players', $currentRoom)) {
-            return;
-        }
-
-        $currentRoom['round_players'] = $currentRoom['players'];
+        $currentRoom['round_players'] = RoomUser::where('room_id', $room->id)->get()->toArray();
 
         foreach ($currentRoom['round_players'] as &$player) {
             $player['private_cards'] = [];
             $player['private_cards'][] = array_shift($currentRoom['cards']);
             $player['private_cards'][] = array_shift($currentRoom['cards']);
-            $player['total_round_bet'] = 0;
         }
 
         $currentRoom['flop'] = [];
@@ -78,11 +74,11 @@ readonly class StartPokerGame
             'total_pot' => $currentRoom['pot'],
             'player_bets' => [
                 [
-                    'user_id' => $playerTurns->first()['id'],
+                    'user_id' => $playerTurns->first()['user_id'],
                     'amount' => $currentRoom['config']['small_blind_amount']
                 ],
                 [
-                    'user_id' => $playerTurns[$playerTurns->count() - 1]['id'],
+                    'user_id' => $playerTurns[$playerTurns->count() - 1]['user_id'],
                     'amount' => $currentRoom['config']['big_blind_amount']
                 ]
             ],
@@ -96,15 +92,19 @@ readonly class StartPokerGame
             'folded_players' => null
         ];
 
+        $this->subtractAmountFromUserCash($room, $currentRoom['big_blind']['user_id'], $currentRoom['config']['big_blind_amount']);;
+        $this->subtractAmountFromUserCash($room, $currentRoom['small_blind']['user_id'], $currentRoom['config']['small_blind_amount']);;
+
         $roundData = [
-            'dealer_id' => $currentRoom['dealer']['id'],
-            'big_blind_id' => $currentRoom['big_blind']['id'],
-            'small_blind_id' => $currentRoom['small_blind']['id'],
+            'dealer_id' => $currentRoom['dealer']['user_id'],
+            'big_blind_id' => $currentRoom['big_blind']['user_id'],
+            'small_blind_id' => $currentRoom['small_blind']['user_id'],
             'total_players_in_round' => $playerTurns->count(),
             'total_pot' => $currentRoom['pot'],
             'current_bet_amount_to_join' => $currentRoom['config']['big_blind_amount'],
-            'player_turn_id' => $data['current_player_to_bet']['id']
+            'player_turn_id' => $data['current_player_to_bet']['user_id']
         ];
+
         $roundActionData = $data['player_bets'];
         $room->data = $data;
 //        $room->player_turn_id = $data['current_player_to_bet']['id'];
@@ -113,7 +113,7 @@ readonly class StartPokerGame
         foreach ($playerTurns as $playerCards) {
             RoomUser::where([
                 'room_id' => $room->id,
-                'user_id' => $playerCards['id']
+                'user_id' => $playerCards['user_id']
             ])->update(['user_info' => ['cards' => $playerCards['private_cards']]]);
         }
 
@@ -128,7 +128,7 @@ readonly class StartPokerGame
         return RoomRound::create([
             'room_id' => $room->id,
             'player_turn_id' => $roundData['player_turn_id'],
-            'play_identifier' => (string) Str::uuid(),
+            'play_identifier' => (string)Str::uuid(),
             'dealer_id' => $roundData['dealer_id'],
             'big_blind_id' => $roundData['big_blind_id'],
             'small_blind_id' => $roundData['small_blind_id'],
@@ -156,14 +156,25 @@ readonly class StartPokerGame
     private function storeRoundPlayers(RoomRound $round, \Illuminate\Support\Collection $playerTurns)
     {
         $order = 1;
-        foreach($playerTurns as $player) {
-            RoundPlayer::create([
-                'user_id' => $player['id'],
+        foreach ($playerTurns as $player) {
+            RoundPlayer::updateOrCreate(['user_id' => $player['user_id'],
+                'room_round_id' => $round->id], [
+                'user_id' => $player['user_id'],
                 'room_round_id' => $round->id,
+                'user_info' => $player['private_cards'],
                 'status' => true,
                 'order' => $order
             ]);
             $order++;
         }
+    }
+
+    private function subtractAmountFromUserCash(Room $room, int $userId, int $amount): void
+    {
+        RoomUser::where([
+                'user_id' => $userId,
+                'room_id' => $room->id]
+        )
+            ->update(['cash' => DB::raw('cash - ' . $amount)]);
     }
 }

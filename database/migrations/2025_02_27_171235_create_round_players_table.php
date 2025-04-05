@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->boolean('status');
             $table->foreignIdFor(User::class);
             $table->foreignIdFor(RoomRound::class);
+            $table->json('user_info')->nullable();
             $table->integer('order');
             $table->timestamps();
             $table->index(['user_id', 'room_round_id', 'status']);

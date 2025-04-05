@@ -12,7 +12,6 @@ class RoomRoundObserver
 {
     public function created(RoomRound $roomRound): void
     {
-        Log::info('aqui');
         FoldInactiveUser::dispatch($roomRound, $roomRound->play_identifier, $roomRound->player_turn_id)->delay(now()->addSeconds(30));
     }
 

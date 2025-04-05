@@ -20,17 +20,17 @@ readonly class JoinRoom
             return false;
         });
 
-        $currentRoom = $room->data;
+//        $currentRoom = $room->data;
 
         if (!$isOnRoom->count()) {
-            $currentRoom['players'][] = [
-                'id' => $user->id,
-                'name' => $user->name,
-                'cash' => 1000,
-            ];
-            RoomUser::create(['room_id' => $room->id, 'user_id' => $user->id, 'play_index' => count($currentRoomUsers) + 1, 'cash' => 1000]);
-            $room->data = $currentRoom;
-            $room->save();
+//            $currentRoom['players'][] = [
+//                'id' => $user->id,
+//                'name' => $user->name,
+//                'cash' => 1000,
+//            ];
+            RoomUser::create(['room_id' => $room->id, 'user_id' => $user->id, 'order' => count($currentRoomUsers) + 1, 'cash' => 1000]);
+//            $room->data = $currentRoom;
+//            $room->save();
             event(new GameStatusUpdated($room->id, 'join_room'));
         }
     }

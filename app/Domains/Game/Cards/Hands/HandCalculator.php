@@ -12,17 +12,17 @@ class HandCalculator
     public function calculateBestHand(array $cards): array
     {
         if ($this->isRoyalStraightFlush($cards)) {
-            return [Hands::RoyalFlush->value];
+            return ['hand' => Hands::RoyalFlush->value, 'cards' => $this->mapCards($this->getFlushCards($cards))];
         }
 
         if ($this->isStraightFlush($cards)) {
-            return [Hands::StraightFlush->value];
+            return ['hand' => Hands::StraightFlush->value, 'cards' => $this->mapCards($this->getStraightFlushCards($cards))];
         }
 
         if ($this->isFourOfAKind($cards)) {
             return [
-                Hands::FourOfAKind->value,
-                $this->mapCards(
+                'hand' => Hands::FourOfAKind->value,
+                'cards' => $this->mapCards(
                     $this->getFourOfAKind($cards)->first()
                 )
             ];
@@ -37,7 +37,7 @@ class HandCalculator
                         return false;
                     }
 
-                    if ($strongestThreeOfKind->first()['carta'] != $pair->first()['carta']) {
+                    if ($strongestThreeOfKind[0]['carta'] != $pair[0]['carta']) {
                         $strongestPairCount++;
                         return true;
                     }
@@ -45,22 +45,23 @@ class HandCalculator
                     return false;
                 }
             )->first();
+
             return [
-                Hands::FullHouse->value,
-                'cards' => $this->mapCards($strongestThreeOfKind->merge($strongestPair->toArray()))
+                'hand' => Hands::FullHouse->value,
+                'cards' => $this->mapCards(collect($strongestThreeOfKind)->merge($strongestPair)->toArray())
             ];
         }
 
         if ($this->isFlush($cards)) {
             return [
-                Hands::Flush->value,
+                'hand' => Hands::Flush->value,
                 'cards' => $this->mapCards($this->getFlushCards($cards))
             ];
         }
 
         if ($this->isStraight($cards)) {
             return [
-                Hands::Straight->value, 'cards' => $this->mapCards(
+                'hand' => Hands::Straight->value, 'cards' => $this->mapCards(
                     collect($cards)
                         ->unique('carta')
                         ->shift(5)
@@ -70,7 +71,7 @@ class HandCalculator
 
         if ($this->isThreeOfAKind($cards)) {
             return [
-                Hands::ThreeOfAKind->value, 'cards' => $this->mapCards(
+                'hand' => Hands::ThreeOfAKind->value, 'cards' => $this->mapCards(
                     $this->getThreeOfAKinds($cards)->first()
                 )
             ];
@@ -79,7 +80,7 @@ class HandCalculator
         if ($this->isTwoPair($cards)) {
 
             return [
-                Hands::TwoPair->value,
+                'hand' => Hands::TwoPair->value,
                 'cards' => $this->mapCards(
                     $this->getPairs($cards)->shift(2)
                         ->flatten(1)
@@ -90,7 +91,7 @@ class HandCalculator
 
         if ($this->isPair($cards)) {
             return [
-                Hands::OnePair->value,
+                'hand' => Hands::OnePair->value,
                 'cards' => $this->mapCards(
                     $this->getPairs($cards)->first()
                 )
@@ -100,7 +101,7 @@ class HandCalculator
         if ($this->isHighCard($cards)) {
             return [
                 'hand' => Hands::HighCard->value,
-                'cards' => $this->mapCards([$cards[0]])
+                'cards' => $this->mapCards([$this->getStrongestCardFromCards($cards)])
             ];
         }
     }
@@ -108,6 +109,21 @@ class HandCalculator
     private function isHighCard(array $cards): bool
     {
         return true;
+    }
+
+    private function getStrongestCardFromCards(array $cards): array
+    {
+        $cardsCollection = collect($cards);
+
+        $aceCollection = $cardsCollection->filter(function ($card) {
+            return $card['carta'] == CardEnum::Ace->value;
+        });
+
+        if ($aceCollection->count() > 0) {
+            return $aceCollection->first();
+        }
+
+        return collect($cards)->sortByDesc('carta')->first();
     }
 
     private function isPair(array $cards): bool
@@ -200,7 +216,7 @@ class HandCalculator
         $uniqueCardsCollection->shift();
 
         foreach ($uniqueCardsCollection as $uniqueCard) {
-            if ($uniqueCard['carta'] != $actualValue - 1) {
+            if ($uniqueCard['carta'] != $actualValue + 1) {
                 return false;
             }
             $actualValue = $uniqueCard['carta'];
@@ -223,47 +239,70 @@ class HandCalculator
         return false;
     }
 
+    private function getFlushCards(array $cards): array
+    {
+        $allCards = collect($cards);
+        $uniqueNaipeCollection = $allCards->groupBy('naipe');
+
+        foreach ($uniqueNaipeCollection as $naipe) {
+            if ($naipe->count() >= 5) {
+                return $naipe->toArray();
+            }
+        }
+
+        return [];
+    }
+
+
     private function isStraightFlush(array $cards): bool
     {
+        if ($this->isFlush($cards)) {
+            return $this->isStraight($this->getFlushCards($cards));
+        }
         return false;
+    }
+
+    private function getStraightFlushCards(array $cards): array
+    {
+        return collect($this->getFlushCards($cards))
+            ->unique('carta')
+            ->shift(5)
+            ->toArray();
     }
 
     private function isRoyalStraightFlush(array $cards): bool
     {
         $bestCards = collect($cards)->shift(5);
-        $ultimoNaipe = null;
-        $ultimoValor = null;
 
-        foreach ($bestCards as $card) {
-            if ($card['carta'] < CardEnum::Ten->value) {
-                return false;
-            }
+        $firstCard = $bestCards->shift();
 
-            if ($ultimoNaipe === null || $ultimoValor === null) {
-                $ultimoNaipe = $card['naipe'];
-                $ultimoValor = $card['carta'];
-                continue;
-            }
-
-            if ($ultimoNaipe === $card['naipe']) {
-                return false;
-            }
-
-            if ($ultimoValor === $card['carta'] + 1) {
-                return false;
-            }
-
-            $ultimoNaipe = $card['naipe'];
-            $ultimoValor = $card['carta'];
+        if ($firstCard['carta'] != CardEnum::Ace->value) {
+            return false;
         }
 
-        return false;
+        if ($bestCards[0]['carta'] != CardEnum::Ten->value) {
+            return false;
+        }
+
+        if ($bestCards[1]['carta'] != CardEnum::Jack->value) {
+            return false;
+        }
+
+        if ($bestCards[2]['carta'] != CardEnum::Queen->value) {
+            return false;
+        }
+
+        if ($bestCards[3]['carta'] != CardEnum::King->value) {
+            return false;
+        }
+
+        return true;
     }
 
     private function mapCards($cards): array
     {
         return collect($cards)->map(function ($card) {
-            return $card['naipe'].$card['carta'];
+            return $card['naipe'] . $card['carta'];
         })->toArray();
     }
 
@@ -316,19 +355,5 @@ class HandCalculator
         return $filteredFourOfAKind->map(function ($fourOfAKindCollection) {
             return $fourOfAKindCollection->toArray();
         });
-    }
-
-    private function getFlushCards(array $cards)
-    {
-        $allCards = collect($cards);
-        $uniqueNaipeCollection = $allCards->groupBy('naipe');
-
-        foreach ($uniqueNaipeCollection as $naipe) {
-            if ($naipe->count() >= 5) {
-                return $naipe->toArray();
-            }
-        }
-
-        return [];
     }
 }

@@ -23,20 +23,20 @@ class GetHand
             if ($cards[0]['carta'] == $cards[1]['carta']) {
                 // AQUI É 1 PAR
                 return [
-                    'hand' => Hands::OnePair,
+                    'hand' => Hands::OnePair->value,
                     'cards' => $this->mapCards($cards)
                 ];
             }
             // AQUI É HIGH CARD
             if ($cards[1]['carta'] === \App\Domains\Game\Cards\Enums\Card::Ace->value) {
                 return [
-                    'hand' => 'HighCard',
+                    'hand' => Hands::HighCard->value,
                     'cards' => $this->mapCards([$cards[1]])
                 ];
             }
 
             return [
-                'hand' => 'HighCard',
+                'hand' => Hands::HighCard->value,
                 'cards' => $this->mapCards([$cards[0]])
             ];
         }

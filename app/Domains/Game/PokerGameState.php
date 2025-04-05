@@ -5,6 +5,7 @@ namespace App\Domains\Game;
 use App\Domains\Game\Rules\GetHand;
 use App\Domains\Game\Rules\GetPlayerPossibleActions;
 use App\Models\Room;
+use App\Models\RoundPlayer;
 use App\Models\User;
 use Illuminate\Support\Arr;
 
@@ -16,7 +17,7 @@ class PokerGameState implements LoadGameStateInterface
 
     private ?array $playerCards = null;
 
-    private ?array $playerTurn;
+    private ?array $playerTurn = null;
 
     private ?array $remnantPlayers = null;
 
@@ -42,11 +43,11 @@ class PokerGameState implements LoadGameStateInterface
     /**
      * @var mixed|null
      */
-    private mixed $playerTurnId;
+    private ?int $playerTurnId = null;
     /**
      * @var mixed[]
      */
-    private array $roundActions;
+    private ?array $roundActions;
 
     public function load(int $roomId, ?User $user = null): PokerGameState
     {
@@ -54,13 +55,15 @@ class PokerGameState implements LoadGameStateInterface
         $round = $this->room->round;
         $roomData = $this->room->data;
         $roomUsers = $this->room->roomUsers;
-//        dd($roomUsers->toArray());
-        $this->players = $roomUsers->toArray() ?? null;
-        $this->playerTurnId = $round?->player_turn_id ?? null;
+
+        $this->players = $roomUsers->load('user')->toArray() ?? null;
+        $this->playerTurnId = $round->player_turn_id ?? null;
         $this->player = collect($this->players)->filter(function ($player) use ($user) {
             return $player['user_id'] === $user->id;
         })->first();
-        $this->roundActions = $this->room->actions()->where(['room_round_id' => $round->id])->get()->toArray();
+
+        $this->player = RoundPlayer::query()->where('room_round_id', $round->id)->where('user_id', $user->id)->first()->toArray();
+        $this->roundActions = $round?->actions?->toArray();
         $this->gameStarted = !is_null($round);
         $this->remnantPlayers = $this->orderRemnantPlayers();
         $this->lastPlayerFolded = $roomData['last_player_folded'] ?? null;
@@ -89,7 +92,7 @@ class PokerGameState implements LoadGameStateInterface
             $carbonDate->addSeconds(30);
 
             $secondsDiff = now()->diffInSeconds($carbonDate);
-            $this->countdown = $secondsDiff;
+//            $this->countdown = $secondsDiff;
             if ($secondsDiff > 30) {
                 $this->countdown = 0;
             } else {
@@ -296,12 +299,16 @@ class PokerGameState implements LoadGameStateInterface
         $players = collect($this->getPlayers());
 
         $greaterPlayersIndexes = collect($players)->filter(function ($player) {
-            return $player['user_id'] !== $this->player['user_id'] && $player['play_index'] > $this->player['play_index'];
+            return $player['user_id'] !== $this->player['user_id'] && Arr::get($player, 'order') > Arr::get($this->player, 'order');
         })->toArray();
 
         $minorPlayerIndexes = collect($players)->filter(function ($player) {
-            return $player['user_id'] !== $this->player['user_id'] && $this->player['play_index'] > $player['play_index'];
+            return $player['user_id'] !== $this->player['user_id'] && Arr::get($this->player, 'order') > Arr::get($player, 'order');
         })->toArray();
+
+        if (count($greaterPlayersIndexes) === 0 && count($minorPlayerIndexes) === 0) {
+            return $players->where('user.id', '!=', $this->player['user_id'])->toArray();
+        }
 
         return collect()->merge($greaterPlayersIndexes)->merge($minorPlayerIndexes)->unique('id')->values()->toArray();
     }

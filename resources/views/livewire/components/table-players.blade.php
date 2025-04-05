@@ -66,7 +66,7 @@ new class extends \Livewire\Volt\Component {
                         @else
                             <span
                                 class="text-xl">
-                                            {{Str::of($otherPlayer['name'])->before(' ')->ucfirst()[0]}}
+                                            {{Str::of(Arr::get($otherPlayer,'user.name'))->before(' ')->ucfirst()[0]}}
                                         </span>
                         @endif
                     </div>
@@ -74,7 +74,7 @@ new class extends \Livewire\Volt\Component {
                 <div
                     class="flex flex-row w-60 h-12 md:w-48 md:h-8 content-center self-center bg-white rounded-r-lg">
                     <div class="self-center pl-3">
-                        {{    Str::of($otherPlayer['name'])->before(' ')}}
+                        {{    Str::of(Arr::get($otherPlayer,'user.name'))->before(' ')}}
                     </div>
                     <div class="self-center pl-3 w-full text-right mr-2">
                         {{$otherPlayer['cash'] ?? 0}} $

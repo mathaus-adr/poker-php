@@ -3,6 +3,7 @@
 namespace App\Domains\Game\Rules;
 
 use App\Models\Room;
+use App\Models\RoomUser;
 use App\Models\User;
 
 class GetPlayerPossibleActions
@@ -13,22 +14,20 @@ class GetPlayerPossibleActions
             return null;
         }
 
-        $playerInfo = collect($room->data['players'])->firstWhere('id', $user?->id ?? auth()->user()->id);
-
-        if ($playerInfo === null) {
-            return null;
-        }
+        $round = $room->round;
+        $totalRoundBet = $round->actions->where('user_id', $user)->sum('amount');
+        $currentBetAmountToJoin = $round->current_bet_amount_to_join;
 
         $actions = [];
 
-        if ($playerInfo['total_round_bet'] < $room->data['current_bet_amount_to_join']) {
+        if ($totalRoundBet < $currentBetAmountToJoin) {
             $actions[] = 'fold';
             $actions[] = 'pagar';
             $actions[] = 'aumentar';
             $actions[] = 'all-in';
         }
 
-        if ($playerInfo['total_round_bet'] >= $room->data['current_bet_amount_to_join']) {
+        if ($totalRoundBet >= $currentBetAmountToJoin) {
             $actions[] = 'check';
         }
 

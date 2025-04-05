@@ -10,6 +10,7 @@ use App\Events\GameStatusUpdated;
 use App\Jobs\FoldInactiveUser;
 use App\Models\RoomRound;
 use App\Models\RoundAction;
+use App\Models\RoundPlayer;
 use App\Models\User;
 use Event;
 use Illuminate\Foundation\Testing\RefreshDatabase;

@@ -1,12 +1,13 @@
 <?php
 
-namespace app\Domains\Game\Player\Actions;
+namespace App\Domains\Game\Player\Actions;
 
 use App\Domains\Game\PokerGameState;
 use App\Events\GameStatusUpdated;
 use App\Jobs\RestartGame;
 use App\Models\Room;
 use App\Models\RoomRound;
+use App\Models\RoomUser;
 use App\Models\RoundAction;
 use App\Models\RoundPlayer;
 use App\Models\User;
@@ -38,20 +39,12 @@ readonly class Fold
     private function checkGameStatus(Room $room): void
     {
         $room->refresh();
+        $round = $room->round;
         //TODO SE TODOS FOLDARAM, O ÚLTIMO QUE NÃO FOLDAR GANHA
-        if (count($room->data['players']) === 1) {
-            $roomData = $room->data;
-            $roomData['players'][0]['cash'] += $roomData['total_pot'];
-
-            $roomData['players'] = array_merge($roomData['players'], $roomData['folded_players']);
-            $roomData['players'] = collect($roomData['players'])->each(function ($player) {
-                $player['total_round_bet'] = 0;
-                return $player;
-            });
-            $roomData['folded_players'] = [];
-            $room->data = $roomData;
-            $room->save();
-            $room->updateQuietly(['play_identifier' => null]);
+        if ($round->roundPlayers()->where('status', true)->count() === 1) {
+            RoomUser::where('room_id', $room->id)
+                ->where('user_id', $round->player_turn_id)
+                ->update(['cash' => DB::raw('cash + ' . $round->total_pot)]);
             RestartGame::dispatch($room->refresh())->delay(now()->addSeconds(5));
         }
 
