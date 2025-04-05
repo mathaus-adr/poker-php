@@ -11,7 +11,7 @@ class GetHand
     public function getHand(?array $cards): ?array
     {
         if (!$cards || count($cards) == 0) {
-            return null;
+            return [];
         }
 
         usort($cards, function ($a, $b) {

@@ -62,7 +62,7 @@ class PokerGameState implements LoadGameStateInterface
             return $player['user_id'] === $user->id;
         })->first();
 
-        $this->player = RoundPlayer::query()->where('room_round_id', $round->id)->where('user_id', $user->id)->first()->toArray();
+//        $this->player = RoundPlayer::query()->where('room_round_id', $round->id)->where('user_id', $user->id)->first()->toArray();
         $this->roundActions = $round?->actions?->toArray();
         $this->gameStarted = !is_null($round);
         $this->remnantPlayers = $this->orderRemnantPlayers();
@@ -117,7 +117,7 @@ class PokerGameState implements LoadGameStateInterface
 
     private function getPlayerPrivateCards(): ?array
     {
-        return Arr::get($this->player, 'user_info.cards');
+        return Arr::get($this->player, 'user_info.cards', []);
     }
 
     /**
@@ -169,7 +169,7 @@ class PokerGameState implements LoadGameStateInterface
 
     public function getPlayerHand(): ?array
     {
-        return $this->playerHand;
+        return $this->playerHand ?? [];
     }
 
     public function getPlayerActions(): ?array
@@ -179,7 +179,7 @@ class PokerGameState implements LoadGameStateInterface
 
     public function getPlayerCards(): ?array
     {
-        return $this->playerCards;
+        return $this->playerCards ?? [];
     }
 
     public function getPlayer(): ?array
