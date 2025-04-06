@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->enum('action', ['bet', 'fold', 'check', 'call', 'raise']);
             $table->foreignIdFor(User::class, 'user_id');
             $table->foreignIdFor(RoomRound::class, 'room_round_id');
+            $table->enum('round_phase', ['pre_flop', 'flop', 'turn', 'river']);
             $table->unsignedBigInteger('amount')->default(0);
             $table->timestamps();
         });

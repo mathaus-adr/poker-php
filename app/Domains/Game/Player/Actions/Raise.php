@@ -33,8 +33,6 @@ class Raise
         $this->storeRoundAction($user, $round, $totalCashToPay);
         $this->setNextPlayerToPlay($round, $roundPlayer);
         $this->subtractCashFromPlayer($room, $user, $totalCashToPay);
-
-        event(new GameStatusUpdated($room->id, 'raise'));
     }
 
 
@@ -52,7 +50,8 @@ class Raise
                 'room_round_id' => $round->id,
                 'user_id' => $user->id,
                 'amount' => $amount,
-                'action' => 'raise'
+                'action' => 'raise',
+                'round_phase' => $round->phase
             ]
         );
     }

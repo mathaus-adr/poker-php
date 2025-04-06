@@ -33,7 +33,7 @@ class Pay extends PlayerActionsAbstract
         $this->storeRoundAction($user, $round, $totalCashToPay);
         $this->setNextPlayerToPlay($round, $roundPlayer);
         $this->subtractCashFromPlayer($room, $user, $totalCashToPay);
-        $this->checkGameStatus($room);
+//        $this->checkGameStatus($room);
     }
 
     private function checkGameStatus(Room $room)
@@ -82,7 +82,8 @@ class Pay extends PlayerActionsAbstract
                 'room_round_id' => $round->id,
                 'user_id' => $user->id,
                 'amount' => $amount,
-                'action' => 'call'
+                'action' => 'call',
+                'round_phase' => $round->phase
             ]
         );
         $round->update(['total_pot' => DB::raw('total_pot + ' . $amount)]);

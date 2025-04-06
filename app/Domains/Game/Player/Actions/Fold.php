@@ -32,8 +32,8 @@ readonly class Fold
         $this->inactivePlayerInRound($roundPlayer);
         $this->storeRoundAction($user, $round);
         $this->setNextPlayerToPlay($round, $roundPlayer);
-        $round->refresh();
-        $this->checkGameStatus($room);
+//        $round->refresh();
+//        $this->checkGameStatus($room);
     }
 
     private function checkGameStatus(Room $room): void
@@ -111,7 +111,8 @@ readonly class Fold
                 'room_round_id' => $round->id,
                 'user_id' => $user->id,
                 'amount' => 0,
-                'action' => 'fold'
+                'action' => 'fold',
+                'round_phase' => $round->phase
             ]
         );
         $round->update(['total_players_in_round' => DB::raw('total_players_in_round - 1')]);

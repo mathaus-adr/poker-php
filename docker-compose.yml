@@ -109,6 +109,34 @@ services:
 #            - "/var/run/docker.sock:/var/run/docker.sock"
 #        networks:
 #            - sail
+    poker-fpm:
+        build: docker/fpm
+        container_name: "poker-fpm"
+        entrypoint: docker/entrypoint.sh
+        environment:
+            - COMPOSER_MEMORY_LIMIT=2G
+            - ENVIRONMENT=local
+        volumes:
+            - .:/var/www
+        depends_on:
+            - mysql
+        networks:
+            - sail
+        user: "1000:www-data"
+
+    nginx:
+        build: docker/nginx
+        container_name: "poker-nginx"
+        tty: true
+        ports:
+            - "9985:80"
+        volumes:
+            - .:/var/www
+        networks:
+            - sail
+        depends_on:
+            - poker-fpm
+
 networks:
     sail:
         driver: bridge

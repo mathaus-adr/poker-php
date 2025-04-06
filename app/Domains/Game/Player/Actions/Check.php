@@ -29,7 +29,7 @@ class Check
         $roundPlayer = $this->getRoundPlayer($round, $user);
         $this->storeRoundAction($user, $round);
         $this->setNextPlayerToPlay($round, $roundPlayer);
-        $this->checkGameStatus($room->refresh());
+//        $this->checkGameStatus($room->refresh());
     }
 
     private function checkGameStatus(Room $room)
@@ -76,7 +76,8 @@ class Check
                 'room_round_id' => $round->id,
                 'user_id' => $user->id,
                 'amount' => 0,
-                'action' => 'check'
+                'action' => 'check',
+                'round_phase' => $round->phase
             ]
         );
     }

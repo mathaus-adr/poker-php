@@ -147,7 +147,8 @@ readonly class StartPokerGame
                     'room_round_id' => $round->id,
                     'user_id' => $action['user_id'],
                     'amount' => $action['amount'],
-                    'action' => 'bet'
+                    'action' => 'bet',
+                    'round_phase' => 'pre_flop'
                 ]
             );
         }
