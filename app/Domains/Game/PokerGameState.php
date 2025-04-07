@@ -62,7 +62,6 @@ class PokerGameState implements LoadGameStateInterface
             return $player['user_id'] === $user->id;
         })->first();
 
-//        $this->player = RoundPlayer::query()->where('room_round_id', $round->id)->where('user_id', $user->id)->first()->toArray();
         $this->roundActions = $round?->actions?->toArray();
         $this->gameStarted = !is_null($round);
         $this->remnantPlayers = $this->orderRemnantPlayers();
@@ -75,7 +74,7 @@ class PokerGameState implements LoadGameStateInterface
             $this->turn = $roomData['turn'] ?? null;
             $this->river = $roomData['river'] ?? null;
 
-            $this->playerHand = $this->getHand($this->flop, $this->turn, $this->river);
+            $this->playerHand = $this->getHand();
 
             $this->playerTotalCash = $this->getPlayerTotalCash();
             $this->playerActualBet = $this->getPlayerActualBet();
@@ -86,29 +85,23 @@ class PokerGameState implements LoadGameStateInterface
 
             $this->totalBetToJoin = $roomData['current_bet_amount_to_join'] ?? 0;
             $this->totalPot = $roomData['total_pot'] ?? 0;
-            $this->isShowDown = $roomData['is_showdown'] ?? false;
-
+            $this->isShowDown = $round->phase === 'end';
             $carbonDate = $this->room->updated_at->clone();
             $carbonDate->addSeconds(30);
 
             $secondsDiff = now()->diffInSeconds($carbonDate);
-//            $this->countdown = $secondsDiff;
+
             if ($secondsDiff > 30) {
                 $this->countdown = 0;
             } else {
                 $this->countdown = $secondsDiff;
             }
-//            $this->countdown = now()->addSeconds(30)->diffInSeconds($this->room->updated_at);
         }
 
         return $this;
     }
 
-    private function getHand(
-        ?array $flop,
-        ?array $turn,
-        ?array $river
-    ): ?array
+    private function getHand(): ?array
     {
         $cards = $this->getAllPlayerCards();
 
@@ -259,16 +252,6 @@ class PokerGameState implements LoadGameStateInterface
         });
 
         return $allPlayersWithSameBet;
-    }
-
-    public function allPlayersHaveBet(): bool
-    {
-        return true;
-    }
-
-    public function getTotalBetToJoin(): ?int
-    {
-        return $this->totalBetToJoin;
     }
 
     public function isShowDown(): bool

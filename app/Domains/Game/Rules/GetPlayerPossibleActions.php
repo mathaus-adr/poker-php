@@ -18,6 +18,10 @@ class GetPlayerPossibleActions
         $totalRoundBet = $round->actions->where('user_id', $user)->sum('amount');
         $currentBetAmountToJoin = $round->current_bet_amount_to_join;
 
+        if ($round->phase === 'end') {
+            return [];
+        }
+
         $actions = [];
 
         if ($totalRoundBet < $currentBetAmountToJoin) {

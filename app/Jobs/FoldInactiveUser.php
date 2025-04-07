@@ -20,7 +20,7 @@ class FoldInactiveUser implements ShouldQueue
      */
     public function __construct(private readonly RoomRound $roomRound, private readonly string $uuid, private readonly int $playerTurnId)
     {
-        //
+        $this->onConnection('database');
     }
 
     /**

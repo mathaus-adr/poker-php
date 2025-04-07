@@ -38,17 +38,18 @@ new class extends \Livewire\Volt\Component {
         <div class="absolute {{$otherPlayersPositions[$index]}}">
             <div class="flex flex-row gap-4">
                 @if($this->pokerGameState->isShowDown() && $otherPlayer)
-                    @foreach($otherPlayer['private_cards'] as $card)
+                    @foreach($otherPlayer['user_info']['cards'] as $card)
                         <livewire:components.gamecard :type="$card['naipe']" :card="$card['carta']"
-                                                      class="" wire:key="{{$card['naipe'].$card['carta']}}"/>
+                                                      :glow="false" wire:key="{{$card['naipe'].$card['carta']}}"/>
 
                     @endforeach
-                @endif
+                @else
 
-                <livewire:components.gamecard :type="0" :card="0"
-                                              class="" wire:key="{{$otherPlayer['user_id'].$index. '1'}}"/>
-                <livewire:components.gamecard :type="0" :card="0"
-                                              class="" wire:key="{{$otherPlayer['user_id'].$index. '2'}}"/>
+                    <livewire:components.gamecard :type="0" :card="0"
+                                                  :glow="false" wire:key="{{$otherPlayer['user_id'].$index. '1'}}"/>
+                    <livewire:components.gamecard :type="0" :card="0"
+                                                  :glow="false" wire:key="{{$otherPlayer['user_id'].$index. '2'}}"/>
+                @endif
             </div>
             <div
                 class="flex flex-row mb-1 mt-1 w-80 text-justify text-center -translate-x-24 text-black font-extrabold {{ $this->pokerGameState->getGameStarted() && $this->pokerGameState->isPlayerTurn($otherPlayer['user_id']) ? 'animate-pulse opacity-20': ''}}">

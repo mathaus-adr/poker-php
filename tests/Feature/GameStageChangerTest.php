@@ -1,5 +1,6 @@
 <?php
 
+use App\Domains\Game\Player\Actions\Check;
 use App\Domains\Game\Player\Actions\Fold;
 use App\Domains\Game\Player\Actions\Pay;
 use App\Domains\Game\Player\Actions\Raise;
@@ -10,6 +11,7 @@ use App\Domains\Game\Room\GameStage\ChangeRoundStageChecker;
 use App\Domains\Game\StartPokerGame;
 use App\Events\GameStatusUpdated;
 use App\Jobs\FoldInactiveUser;
+use App\Jobs\RestartGame;
 use App\Models\Room;
 use App\Models\RoomRound;
 use App\Models\RoundAction;
@@ -201,3 +203,110 @@ it('should can change game phase after last player folds when everyone has same 
     $room = Room::find($round->room_id);
     $this->assertNotNull($room->data['flop']);
 });
+
+
+it('should can change game phase after everyone played in round when everyone has same value on bets in all phases',
+    function () {
+        Event::fake([GameStatusUpdated::class]);
+
+        Bus::fake();
+
+        $round = RoomRound::first();
+        $changeRoundStage = app(ChangeRoundStageChecker::class);
+        $this->assertFalse($changeRoundStage->execute($round));
+        $room = $round->room;
+        $pay = app(Pay::class);
+        $check = app(Check::class);
+
+        $user = User::find($round->player_turn_id);
+        $pay->execute($room, $user);
+
+        $round->refresh();
+
+        $user = User::find($round->player_turn_id);
+        $pay->execute($room, $user);
+
+        $round->refresh();
+
+        $user = User::find($round->player_turn_id);
+        $pay->execute($room, $user);
+
+        $round->refresh();
+
+        $this->assertDatabaseHas(RoomRound::class, [
+            'id' => $round->id,
+            'phase' => 'flop',
+            'total_pot' => 40,
+            'current_bet_amount_to_join' => 10,
+        ]);
+
+        $room = Room::find($round->room_id);
+        $this->assertNotNull($room->data['flop']);
+
+        $users = $room->roomUsers;
+
+        foreach ($users as $user) {
+            $user = User::find($round->player_turn_id);
+            $check->check($room, $user);
+            $this->assertDatabaseHas(RoundAction::class, [
+                'user_id' => $user->id,
+                'action' => 'check',
+                'round_phase' => 'flop'
+            ]);
+
+            $round->refresh();
+        }
+
+        $this->assertDatabaseHas(RoomRound::class, [
+            'id' => $round->id,
+            'phase' => 'turn',
+            'total_pot' => 40,
+            'current_bet_amount_to_join' => 10,
+        ]);
+
+        Bus::assertNotDispatched(RestartGame::class);
+
+        foreach ($users as $user) {
+            $user = User::find($round->player_turn_id);
+            $check->check($room, $user);
+            $this->assertDatabaseHas(RoundAction::class, [
+                'user_id' => $user->id,
+                'action' => 'check',
+                'round_phase' => 'turn'
+            ]);
+
+            $round->refresh();
+        }
+
+        $this->assertDatabaseHas(RoomRound::class, [
+            'id' => $round->id,
+            'phase' => 'river',
+            'total_pot' => 40,
+            'current_bet_amount_to_join' => 10,
+        ]);
+
+        Bus::assertNotDispatched(RestartGame::class);
+        foreach ($users as $user) {
+            $user = User::find($round->player_turn_id);
+            $check->check($room, $user);
+            $this->assertDatabaseHas(RoundAction::class, [
+                'user_id' => $user->id,
+                'action' => 'check',
+                'round_phase' => 'river'
+            ]);
+
+            $round->refresh();
+        }
+
+        Event::assertDispatchedTimes(GameStatusUpdated::class, 15);
+        Bus::assertDispatchedTimes(FoldInactiveUser::class, 15);
+        Bus::assertDispatchedTimes(RestartGame::class);
+
+        $this->assertDatabaseHas(RoomRound::class, [
+            'id' => $round->id,
+            'phase' => 'end',
+            'total_pot' => 40,
+            'current_bet_amount_to_join' => 10,
+        ]);
+
+    })->group('all_actions');

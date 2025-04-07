@@ -30,7 +30,7 @@ class ChangeRoundStageChecker
                 DB::raw('SUM(amount) AS total_amount'), 'user_id'
             ])
             ->whereIn('user_id', $playersIds)
-            ->orderBy('total_bet_in_round')
+            ->orderBy('total_amount')
             ->groupBy('user_id')->get();
 
         $allPlayersBetAmountIsTheSame = true;
@@ -47,7 +47,7 @@ class ChangeRoundStageChecker
                 break;
             }
         }
-//        dd($allPlayersPlayedInTheActualPhase, $allPlayersBetAmountIsTheSame, $totalBetByActivePlayerCollection);
+
         return $allPlayersPlayedInTheActualPhase && $allPlayersBetAmountIsTheSame;
     }
 }

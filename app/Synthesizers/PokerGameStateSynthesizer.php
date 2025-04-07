@@ -14,8 +14,9 @@ class PokerGameStateSynthesizer extends Synth
         return $target instanceof PokerGameState;
     }
 
-    public function dehydrate($target)
+    public function dehydrate(PokerGameState $target)
     {
+//        dd($target->isShowDown());
         return [[
             'player' => $target->getPlayer(),
             'playerCards' => $target->getPlayerCards(),

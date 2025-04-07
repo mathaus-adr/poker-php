@@ -26,7 +26,7 @@ class Room extends Model
 
     public function round(): HasOne
     {
-        return $this->hasOne(RoomRound::class)->where('phase', '!=', 'end')->latest();
+        return $this->hasOne(RoomRound::class)->latest();
     }
 
     public function roomUsers(): HasMany

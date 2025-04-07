@@ -32,7 +32,7 @@ new class extends \Livewire\Volt\Component {
     @if($this->pokerGameState->getPlayerHand())
         <div class="flex w-full h-8 text-black -translate-x-24 justify-center m-2">
         <span
-            class="text-xl bg-white text-center self-center rounded-lg p-2 shadow "> {{Hands::get($this->pokerGameState->getPlayerHand()['hand']?->value)}}</span>
+            class="text-xl bg-white text-center self-center rounded-lg p-2 shadow "> {{Hands::get($this->pokerGameState->getPlayerHand()['hand'])}}</span>
         </div>
     @endif
     <div
