@@ -59,4 +59,27 @@ new class extends \Livewire\Volt\Component {
             @endforeach
         @endif
     </div>
+
+    <dialog id="raise_modal" class="modal">
+        <div class="modal-box" x-data="{raise_amount : {{$this->pokerGameState->getTotalBetToJoin() * 2}}}">
+            <h3 class="text-lg font-bold">Aumentar aposta</h3>
+            <div class="modal-box">
+                <form method="dialog">
+                    <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                </form>
+            </div>
+            <div class="modal-body m-2">
+                <input type="range" x-on:change="raise_amount = $event.target.value" wire:model="total_raise"
+                       min="{{$this->pokerGameState->getTotalBetToJoin() * 2}}"
+                       value="{{$this->pokerGameState->getTotalBetToJoin() * 2}}"
+                       max="{{$this->pokerGameState->getPlayerTotalCash()}}" class="range range-success"/>
+                <span x-text="raise_amount"></span>
+            </div>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button wire:click="aumentar(raise_amount)" class="btn btn-success">Aumentar aposta</button>
+                </form>
+            </div>
+        </div>
+    </dialog>
 </div>

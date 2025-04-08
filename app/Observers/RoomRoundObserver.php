@@ -81,13 +81,25 @@ class RoomRoundObserver
 
     private function changeGameStatus(RoomRound $round): void
     {
+        $canChangePhaseFromGame = app(ChangeRoundStageChecker::class)->execute($round);
+
+        if ($canChangePhaseFromGame && $round->phase === 'river') {
+            $strongestHands = app(HandComparator::class)->execute($round);
+            $round->updateQuietly(['winner_id' => $strongestHands['user_id'], 'phase' => 'end']);
+            RoomUser::where('room_id', $round->room->id)
+                ->where('user_id', $strongestHands['user_id'])
+                ->update(['cash' => DB::raw('cash + '.$round->total_pot)]);
+            event(new GameStatusUpdated($round->room_id));
+            RestartGame::dispatch($round->room)->delay(now()->addSeconds(7));
+            return;
+        }
+
         $lastPlayerAction = $round->actions()
             ->where('user_id', $round->getOriginal('player_turn_id'))
             ->where('round_phase', $round->phase)
             ->latest()
             ->first();
 
-        $canChangePhaseFromGame = app(ChangeRoundStageChecker::class)->execute($round);
 
         Log::info('last_player_action',
             array_merge(
@@ -101,15 +113,6 @@ class RoomRoundObserver
         if ($canChangePhaseFromGame) {
             $round->phase = $this->phaseMap[$round->phase] ?? $round->phase;
             $this->setPhaseCardsOnRoom($round);
-        }
-
-        if ($round->isDirty('phase') && $round->phase === 'end') {
-            $strongestHands = app(HandComparator::class)->execute($round);
-            $round->update(['winner_id' => $strongestHands['user_id']]);
-            RoomUser::where('room_id', $round->room->id)
-                ->where('user_id', $strongestHands['user_id'])
-                ->update(['cash' => DB::raw('cash + '.$round->total_pot)]);
-            RestartGame::dispatch($round->room)->delay(now()->addSeconds(7));
         }
     }
 

@@ -7,7 +7,7 @@ services:
                 WWWGROUP: '${WWWGROUP}'
                 XDEBUG: '${SAIL_XDEBUG_MODE}'
 
-        image: sail-8.3/app
+        image: sail-poker-app
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         ports:

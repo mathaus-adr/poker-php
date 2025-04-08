@@ -83,8 +83,8 @@ class PokerGameState implements LoadGameStateInterface
                 $user
             );
 
-            $this->totalBetToJoin = $roomData['current_bet_amount_to_join'] ?? 0;
-            $this->totalPot = $roomData['total_pot'] ?? 0;
+            $this->totalBetToJoin = $round->current_bet_amount_to_join ?? 0;
+            $this->totalPot = $round->total_pot ?? 0;
             $this->isShowDown = $round->phase === 'end';
             $carbonDate = $this->room->updated_at->clone();
             $carbonDate->addSeconds(30);
@@ -304,5 +304,10 @@ class PokerGameState implements LoadGameStateInterface
     public function getCountdown(): ?int
     {
         return $this->countdown;
+    }
+
+    public function getTotalBetToJoin(): int
+    {
+        return $this->totalBetToJoin ?? 0;
     }
 }

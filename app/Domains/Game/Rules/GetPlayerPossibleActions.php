@@ -15,7 +15,7 @@ class GetPlayerPossibleActions
         }
 
         $round = $room->round;
-        $totalRoundBet = $round->actions->where('user_id', $user)->sum('amount');
+        $totalRoundBet = $round->actions->where('user_id', $user->id)->sum('amount');
         $currentBetAmountToJoin = $round->current_bet_amount_to_join;
 
         if ($round->phase === 'end') {
@@ -24,15 +24,19 @@ class GetPlayerPossibleActions
 
         $actions = [];
 
-        if ($totalRoundBet < $currentBetAmountToJoin) {
+        if ($currentBetAmountToJoin > $totalRoundBet) {
             $actions[] = 'fold';
             $actions[] = 'pagar';
             $actions[] = 'aumentar';
             $actions[] = 'all-in';
         }
 
-        if ($totalRoundBet >= $currentBetAmountToJoin) {
+        if ($totalRoundBet == $currentBetAmountToJoin) {
+            $actions[] = 'aumentar';
+            $actions[] = 'all-in';
             $actions[] = 'check';
+            $actions[] = 'aumentar';
+            return $actions;
         }
 
         return $actions;

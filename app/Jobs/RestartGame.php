@@ -20,7 +20,7 @@ class RestartGame implements ShouldQueue
      */
     public function __construct(private readonly Room $room)
     {
-        //
+        $this->onConnection('database');
     }
 
     /**
