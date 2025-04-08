@@ -14,6 +14,7 @@ use App\Jobs\FoldInactiveUser;
 use App\Jobs\RestartGame;
 use App\Models\Room;
 use App\Models\RoomRound;
+use App\Models\RoomUser;
 use App\Models\RoundAction;
 use App\Models\User;
 
@@ -62,29 +63,29 @@ beforeEach(function () {
 
     $pokerGameState->load($room->id, $roomOwnerUser);
 
-    $this->assertTrue($pokerGameState->getGameStarted());
+    expect($pokerGameState->getGameStarted())->toBeTrue();
 
     // Verificar se os jogadores foram carregados corretamente
-    $this->assertNotNull($pokerGameState->getPlayers());
-    $this->assertCount(4, $pokerGameState->getPlayers());
+    expect($pokerGameState->getPlayers())->not->toBeNull();
+    expect($pokerGameState->getPlayers())->toHaveCount(4);
 
     // Verificar se o jogador atual foi carregado corretamente
-    $this->assertNotNull($pokerGameState->getPlayer());
-    $this->assertEquals($roomOwnerUser->id, $pokerGameState->getPlayer()['user_id']);
+    expect($pokerGameState->getPlayer())->not->toBeNull();
+    expect($pokerGameState->getPlayer()['user_id'])->toEqual($roomOwnerUser->id);
 
     // Verificar se o pote total foi carregado corretamente
-    $this->assertNotNull($pokerGameState->getTotalPot());
-    $this->assertEquals(15, $pokerGameState->getTotalPot());
+    expect($pokerGameState->getTotalPot())->not->toBeNull();
+    expect($pokerGameState->getTotalPot())->toEqual(15);
 
     // Verificar se o último jogador que desistiu foi carregado corretamente
-    $this->assertNull($pokerGameState->getLastPlayerFolded());
+    expect($pokerGameState->getLastPlayerFolded())->toBeNull();
 });
 
 
 it('cannot change game phase when round starts', function () {
     $changeRoundStage = app(ChangeRoundStageChecker::class);
-    $this->assertFalse($changeRoundStage->execute(RoomRound::first()));
-});
+    expect($changeRoundStage->execute(RoomRound::first()))->toBeFalse();
+})->group('game-domain');;
 
 it('should can change game phase after everyone played in round when everyone has same value on bets', function () {
     Event::fake([GameStatusUpdated::class]);
@@ -93,7 +94,7 @@ it('should can change game phase after everyone played in round when everyone ha
 
     $round = RoomRound::first();
     $changeRoundStage = app(ChangeRoundStageChecker::class);
-    $this->assertFalse($changeRoundStage->execute($round));
+    expect($changeRoundStage->execute($round))->toBeFalse();
     $room = $round->room;
     $pay = app(Pay::class);
 
@@ -121,15 +122,15 @@ it('should can change game phase after everyone played in round when everyone ha
         'current_bet_amount_to_join' => 10,
     ]);
     $room = Room::find($round->room_id);
-    $this->assertNotNull($room->data['flop']);
-});
+    expect($room->data['flop'])->not->toBeNull();
+})->group('game-domain');;
 
 it('should cannot change game phase after last player to bet raise amount to bet', function () {
     Event::fake([GameStatusUpdated::class]);
 
     $round = RoomRound::first();
     $changeRoundStage = app(ChangeRoundStageChecker::class);
-    $this->assertFalse($changeRoundStage->execute($round));
+    expect($changeRoundStage->execute($round))->toBeFalse();
     $room = $round->room;
     $pay = app(Pay::class);
     $raise = app(Raise::class);
@@ -163,14 +164,14 @@ it('should cannot change game phase after last player to bet raise amount to bet
     ]);
     $room->refresh();
     $this->assertArrayNotHasKey('flop', $room->data);
-});
+})->group('game-domain');;
 
 it('should can change game phase after last player folds when everyone has same value on bets', function () {
     Event::fake([GameStatusUpdated::class]);
 
     $round = RoomRound::first();
     $changeRoundStage = app(ChangeRoundStageChecker::class);
-    $this->assertFalse($changeRoundStage->execute($round));
+    expect($changeRoundStage->execute($round))->toBeFalse();
     $room = $round->room;
     $pay = app(Pay::class);
     $fold = app(Fold::class);
@@ -201,8 +202,8 @@ it('should can change game phase after last player folds when everyone has same 
     ]);
 
     $room = Room::find($round->room_id);
-    $this->assertNotNull($room->data['flop']);
-});
+    expect($room->data['flop'])->not->toBeNull();
+})->group('game-domain');;
 
 
 it('should can change game phase after everyone played in round when everyone has same value on bets in all phases',
@@ -213,7 +214,7 @@ it('should can change game phase after everyone played in round when everyone ha
 
         $round = RoomRound::first();
         $changeRoundStage = app(ChangeRoundStageChecker::class);
-        $this->assertFalse($changeRoundStage->execute($round));
+        expect($changeRoundStage->execute($round))->toBeFalse();
         $room = $round->room;
         $pay = app(Pay::class);
         $check = app(Check::class);
@@ -241,7 +242,7 @@ it('should can change game phase after everyone played in round when everyone ha
         ]);
 
         $room = Room::find($round->room_id);
-        $this->assertNotNull($room->data['flop']);
+        expect($room->data['flop'])->not->toBeNull();
 
         $users = $room->roomUsers;
 
@@ -299,14 +300,38 @@ it('should can change game phase after everyone played in round when everyone ha
         }
 
         Event::assertDispatchedTimes(GameStatusUpdated::class, 15);
-        Bus::assertDispatchedTimes(FoldInactiveUser::class, 15);
-        Bus::assertDispatchedTimes(RestartGame::class);
+        Bus::assertDispatchedTimes(FoldInactiveUser::class, 14);
+        Bus::assertNotDispatchedSync(RestartGame::class);
 
         $this->assertDatabaseHas(RoomRound::class, [
             'id' => $round->id,
             'phase' => 'end',
             'total_pot' => 40,
             'current_bet_amount_to_join' => 10,
+            'winner_id' => 4,
         ]);
 
-    })->group('all_actions');
+        $this->assertDatabaseHas(RoomUser::class, [
+            'user_id' => 4,
+            'cash' => 1030,
+            'room_id' => $room->id,
+        ]);
+
+        $this->assertDatabaseHas(RoomUser::class, [
+            'user_id' => 1,
+            'cash' => 990,
+            'room_id' => $room->id,
+        ]);
+
+        $this->assertDatabaseHas(RoomUser::class, [
+            'user_id' => 2,
+            'cash' => 990,
+            'room_id' => $room->id,
+        ]);
+
+        $this->assertDatabaseHas(RoomUser::class, [
+            'user_id' => 3,
+            'cash' => 990,
+            'room_id' => $room->id,
+        ]);
+    })->group('game-domain');;

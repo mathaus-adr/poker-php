@@ -17,8 +17,8 @@ it('test card ranking royal straight flush', function () {
 
     $handCalculator = new HandCalculator();
     $hand = $handCalculator->calculateBestHand($cards);
-    $this->assertEquals(['hand' => Hands::RoyalFlush->value, 'cards' => [31, 310, 311, 312, 313]], $hand);
-});
+    expect($hand)->toEqual(['hand' => Hands::RoyalFlush->value, 'cards' => [31, 310, 311, 312, 313]]);
+})->group('game-domain');;
 
 it('test card ranking straight flush', function () {
 
@@ -32,8 +32,8 @@ it('test card ranking straight flush', function () {
 
     $handCalculator = new HandCalculator();
     $hand = $handCalculator->calculateBestHand($cards);
-    $this->assertEquals(['hand' => Hands::StraightFlush->value, 'cards' => [31, 32, 33, 34, 35]], $hand);
-});
+    expect($hand)->toEqual(['hand' => Hands::StraightFlush->value, 'cards' => [31, 32, 33, 34, 35]]);
+})->group('game-domain');;
 
 
 it('test card ranking four of a kind', function () {
@@ -47,8 +47,8 @@ it('test card ranking four of a kind', function () {
 
     $handCalculator = new HandCalculator();
     $hand = $handCalculator->calculateBestHand($cards);
-    $this->assertEquals(['hand' => Hands::FourOfAKind->value,'cards' =>  [31, 41, 11, 21]], $hand);
-});
+    expect($hand)->toEqual(['hand' => Hands::FourOfAKind->value,'cards' =>  [31, 41, 11, 21]]);
+})->group('game-domain');;
 
 it('test card ranking full house', function () {
     $cards = [
@@ -61,8 +61,8 @@ it('test card ranking full house', function () {
 
     $handCalculator = new HandCalculator();
     $hand = $handCalculator->calculateBestHand($cards);
-    $this->assertEquals(['hand' => Hands::FullHouse->value, 'cards' => [31, 41, 11, 313, 413]], $hand);
-});
+    expect($hand)->toEqual(['hand' => Hands::FullHouse->value, 'cards' => [31, 41, 11, 313, 413]]);
+})->group('game-domain');;
 
 it('test card ranking flush', function () {
     $cards = [
@@ -75,8 +75,8 @@ it('test card ranking flush', function () {
 
     $handCalculator = new HandCalculator();
     $hand = $handCalculator->calculateBestHand($cards);
-    $this->assertEquals(['hand' => Hands::Flush->value, 'cards' => [32, 34, 37, 39, 311]], $hand);
-});
+    expect($hand)->toEqual(['hand' => Hands::Flush->value, 'cards' => [32, 34, 37, 39, 311]]);
+})->group('game-domain');;
 
 it('test card ranking straight', function () {
     $cards = [
@@ -89,8 +89,8 @@ it('test card ranking straight', function () {
 
     $handCalculator = new HandCalculator();
     $hand = $handCalculator->calculateBestHand($cards);
-    $this->assertEquals(['hand' => Hands::Straight->value, 'cards' => [32, 43, 14, 25, 46]], $hand);
-});
+    expect($hand)->toEqual(['hand' => Hands::Straight->value, 'cards' => [32, 43, 14, 25, 46]]);
+})->group('game-domain');;
 
 it('test card ranking three of a kind', function () {
     $cards = [
@@ -103,8 +103,8 @@ it('test card ranking three of a kind', function () {
 
     $handCalculator = new HandCalculator();
     $hand = $handCalculator->calculateBestHand($cards);
-    $this->assertEquals(['hand' => Hands::ThreeOfAKind->value, 'cards' => [35, 45, 15]], $hand);
-});
+    expect($hand)->toEqual(['hand' => Hands::ThreeOfAKind->value, 'cards' => [35, 45, 15]]);
+})->group('game-domain');;
 
 it('test card ranking two pair', function () {
     $cards = [
@@ -117,8 +117,8 @@ it('test card ranking two pair', function () {
 
     $handCalculator = new HandCalculator();
     $hand = $handCalculator->calculateBestHand($cards);
-    $this->assertEquals(['hand' => Hands::TwoPair->value, 'cards' => [35, 45, 111, 411]], $hand);
-});
+    expect($hand)->toEqual(['hand' => Hands::TwoPair->value, 'cards' => [35, 45, 111, 411]]);
+})->group('game-domain');;
 
 it('test card ranking one pair', function () {
     $cards = [
@@ -131,8 +131,8 @@ it('test card ranking one pair', function () {
 
     $handCalculator = new HandCalculator();
     $hand = $handCalculator->calculateBestHand($cards);
-    $this->assertEquals(['hand' => Hands::OnePair->value, 'cards' => [35, 45]], $hand);
-});
+    expect($hand)->toEqual(['hand' => Hands::OnePair->value, 'cards' => [35, 45]]);
+})->group('game-domain');;
 
 it('test card ranking high card', function () {
     $cards = [
@@ -145,8 +145,8 @@ it('test card ranking high card', function () {
 
     $handCalculator = new HandCalculator();
     $hand = $handCalculator->calculateBestHand($cards);
-    $this->assertEquals(['hand' => Hands::HighCard->value, 'cards' => [313]], $hand);
-});
+    expect($hand)->toEqual(['hand' => Hands::HighCard->value, 'cards' => [313]]);
+})->group('game-domain');;
 
 it('test card ranking high card with ace', function () {
     $cards = [
@@ -159,5 +159,5 @@ it('test card ranking high card with ace', function () {
 
     $handCalculator = new HandCalculator();
     $hand = $handCalculator->calculateBestHand($cards);
-    $this->assertEquals(['hand' => Hands::HighCard->value, 'cards' => [31]], $hand);
-});
+    expect($hand)->toEqual(['hand' => Hands::HighCard->value, 'cards' => [31]]);
+})->group('game-domain');;

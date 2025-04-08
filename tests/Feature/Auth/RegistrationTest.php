@@ -1,9 +1,8 @@
 <?php
 
-namespace Tests\Feature\Auth;
-
 use App\Providers\RouteServiceProvider;
 use Livewire\Volt\Volt;
+
 
 test('registration screen can be rendered', function () {
     $response = $this->get('/register');

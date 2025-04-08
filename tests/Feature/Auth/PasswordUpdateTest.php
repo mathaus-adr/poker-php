@@ -1,10 +1,9 @@
 <?php
 
-namespace Tests\Feature\Auth;
-
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Volt\Volt;
+
 
 test('password can be updated', function () {
     $user = User::factory()->create();
@@ -21,7 +20,7 @@ test('password can be updated', function () {
         ->assertHasNoErrors()
         ->assertNoRedirect();
 
-    $this->assertTrue(Hash::check('new-password', $user->refresh()->password));
+    expect(Hash::check('new-password', $user->refresh()->password))->toBeTrue();
 });
 
 test('correct password must be provided to update password', function () {
