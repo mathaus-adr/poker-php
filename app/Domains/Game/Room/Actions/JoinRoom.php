@@ -9,28 +9,17 @@ use App\Models\User;
 
 readonly class JoinRoom
 {
-    public function execute(User $user, Room $room)
+    public function execute(User $user, Room $room): void
     {
-        $currentRoomUsers = $room->data['players'];
+        $isOnRoom = RoomUser::query()
+            ->where('room_id', $room->id)
+            ->where('user_id', $user->id)
+            ->exists();
 
-        $isOnRoom = collect($currentRoomUsers)->filter(function ($roomUser) use ($user) {
-            if ($roomUser['id'] == $user['id']) {
-                return true;
-            }
-            return false;
-        });
-
-//        $currentRoom = $room->data;
-
-        if (!$isOnRoom->count()) {
-//            $currentRoom['players'][] = [
-//                'id' => $user->id,
-//                'name' => $user->name,
-//                'cash' => 1000,
-//            ];
-            RoomUser::create(['room_id' => $room->id, 'user_id' => $user->id, 'order' => count($currentRoomUsers) + 1, 'cash' => 1000]);
-//            $room->data = $currentRoom;
-//            $room->save();
+        if (!$isOnRoom) {
+            RoomUser::create([
+                'room_id' => $room->id, 'user_id' => $user->id, 'cash' => 1000
+            ]);
             event(new GameStatusUpdated($room->id, 'join_room'));
         }
     }

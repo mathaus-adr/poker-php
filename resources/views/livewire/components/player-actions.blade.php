@@ -1,7 +1,9 @@
 <?php
 
 use App\Domains\Game\PokerGameState;
+use App\Domains\Game\Room\Actions\LeaveRoom;
 use App\Models\Room;
+use JetBrains\PhpStorm\NoReturn;
 
 new class extends \Livewire\Volt\Component {
     #[\Livewire\Attributes\Reactive]
@@ -32,11 +34,23 @@ new class extends \Livewire\Volt\Component {
         $check->check($this->room, auth()->user());
     }
 
+    public function allin(): void
+    {
+        $allin = app(\App\Domains\Game\Player\Actions\AllIn::class);
+        $allin->execute($this->room, auth()->user());
+    }
+
     public function startGame(Room $room, \App\Domains\Game\StartPokerGame $startPokerGame): void
     {
         $startPokerGame->execute(
             $this->room
         );
+    }
+
+    #[NoReturn] public function sair(LeaveRoom $leaveRoom): void
+    {
+        $leaveRoom->execute($this->room, auth()->user());
+        $this->redirect('/dashboard', navigate: true);
     }
 }
 ?>
@@ -58,6 +72,7 @@ new class extends \Livewire\Volt\Component {
                 <button class="btn" wire:click="{{$action}}">{{ucfirst($action)}}</button>
             @endforeach
         @endif
+        <button class="btn bg-red-800" wire:click="sair">Sair da sala</button>
     </div>
 
     <dialog id="raise_modal" class="modal">

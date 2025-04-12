@@ -8,15 +8,17 @@ new class extends Component {
 
     public function with(): array
     {
+        $this->rooms = Room::paginate(12);
+
         return [
-            'rooms' => Room::paginate(12),
+            'rooms' => $this->rooms,
         ];
     }
 
     public function join(Room $room)
     {
         app(\App\Domains\Game\Room\Actions\JoinRoom::class)->execute(auth()->user(), $room);
-        $this->redirectIntended(default: '/room/' . $room->id, navigate: true);
+        $this->redirectIntended(default: '/room/'.$room->id, navigate: true);
     }
 
     public function create()
@@ -26,7 +28,19 @@ new class extends Component {
             return;
         }
 
-        $this->redirectIntended(default: '/room/' . $room->id, navigate: true);
+        $this->redirectIntended(default: '/room/'.$room->id, navigate: true);
+    }
+
+    public function getListeners(): array
+    {
+        return [
+            'echo:rooms,RoomListUpdatedEvent' => 'handleRoomEvent'
+        ];
+    }
+
+    public function handleRoomEvent(): void
+    {
+        $this->rooms = Room::paginate(12);
     }
 };
 ?>
@@ -48,6 +62,13 @@ new class extends Component {
             @endforeach
         @endif
 
+        @if(count($rooms) == 0)
+            <div class="alert alert-warning col-span-12">
+                <x-css-info/>
+                <span class="font-mono text-center">Nenhuma sala no momento</span>
+            </div>
+        @endif
+
         @foreach($rooms as $room)
             <div class="card col-span-4 w-96 bg-gray-900">
                 <div class="card-body text-gray-500 text-xl">
@@ -61,15 +82,6 @@ new class extends Component {
                 </div>
             </div>
         @endforeach
-
-
+        {{ $rooms->links() }}
     </div>
-
-
-{{--    <div class="join justify-items-center col-span-12">--}}
-{{--        <button type="button" class="join-item btn">1</button>--}}
-{{--        <button type="button" class="join-item btn">2</button>--}}
-{{--        <button type="button" class="join-item btn">3</button>--}}
-{{--        <button type="button" class="join-item btn">4</button>--}}
-{{--    </div>--}}
 </div>

@@ -2,6 +2,7 @@
 
 namespace App\Domains\Game\Room\Actions;
 
+use App\Events\RoomListUpdatedEvent;
 use App\Models\Room;
 use App\Models\RoomUser;
 use App\Models\User;
@@ -31,6 +32,7 @@ readonly class CreateRoom
         $room = Room::create(['user_id' => $user->id, 'data' => ['players' => [$userData]]]);
 
         RoomUser::create(['room_id' => $room->id, 'user_id' => $user->id, 'user_info' => $userData, 'order' => 1, 'cash' => 1000]);
+        broadcast(new RoomListUpdatedEvent());
         return $room;
     }
 }

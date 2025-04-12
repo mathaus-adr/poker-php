@@ -131,6 +131,5 @@ class RoomRoundObserver
                 RestartGame::dispatch($room)->delay(now()->addSeconds(7));
             }
         }
-        //TODO tentar utilizar a ultima ação do jogador do big blind para executar uma ação após todos pagarem a sua aposta
     }
 }
