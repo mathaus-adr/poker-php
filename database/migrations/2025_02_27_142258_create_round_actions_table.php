@@ -11,7 +11,7 @@ return new class extends Migration {
     {
         Schema::create('round_actions', function (Blueprint $table) {
             $table->id();
-            $table->enum('action', ['bet', 'fold', 'check', 'call', 'raise']);
+            $table->enum('action', ['bet', 'fold', 'check', 'call', 'raise', 'allin']);
             $table->foreignIdFor(User::class, 'user_id');
             $table->foreignIdFor(RoomRound::class, 'room_round_id');
             $table->enum('round_phase', ['pre_flop', 'flop', 'turn', 'river']);

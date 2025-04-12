@@ -12,13 +12,13 @@ use App\Models\RoundPlayer;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-class Pay extends PlayerActionsAbstract
+class Pay
 {
     public function __construct(private readonly PokerGameState $pokerGameState)
     {
     }
 
-    public function executeAction(Room $room, User $user): void
+    public function execute(Room $room, User $user): void
     {
         $this->pokerGameState->load($room->id, $user);
 
@@ -33,46 +33,6 @@ class Pay extends PlayerActionsAbstract
         $this->storeRoundAction($user, $round, $totalCashToPay);
         $this->setNextPlayerToPlay($round, $roundPlayer);
         $this->subtractCashFromPlayer($room, $user, $totalCashToPay);
-//        $this->checkGameStatus($room);
-    }
-
-    private function checkGameStatus(Room $room)
-    {
-        if ($this->pokerGameState->isAllPlayersWithSameBet() && !$this->pokerGameState->getFlop()) {
-            $roomData = $room->data;
-            $roomData['flop'] = [];
-            $roomData['flop'][] = array_shift($roomData['cards']);
-            $roomData['flop'][] = array_shift($roomData['cards']);
-            $roomData['flop'][] = array_shift($roomData['cards']);
-            $roomData['phase'] = 'flop';
-            $room->data = $roomData;
-            $room->save();
-            event(new GameStatusUpdated($room->id));
-            return;
-        }
-
-        if ($this->pokerGameState->isAllPlayersWithSameBet() && !$this->pokerGameState->getTurn()) {
-            $roomData = $room->data;
-            $roomData['turn'] = [];
-            $roomData['turn'][] = array_shift($roomData['cards']);
-            $roomData['phase'] = 'turn';
-            $room->data = $roomData;
-            $room->save();
-            event(new GameStatusUpdated($room->id));
-            return;
-        }
-
-        if ($this->pokerGameState->isAllPlayersWithSameBet() && !$this->pokerGameState->getRiver()) {
-            $roomData = $room->data;
-            $roomData['river'] = [];
-            $roomData['river'][] = array_shift($roomData['cards']);
-            $roomData['phase'] = 'river';
-            $room->data = $roomData;
-            $room->save();
-            event(new GameStatusUpdated($room->id));
-        }
-
-        event(new GameStatusUpdated($room->id));
     }
 
     private function storeRoundAction(User $user, RoomRound $round, int $amount): void

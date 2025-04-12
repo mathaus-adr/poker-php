@@ -28,14 +28,13 @@ class GetPlayerPossibleActions
             $actions[] = 'fold';
             $actions[] = 'pagar';
             $actions[] = 'aumentar';
-            $actions[] = 'all-in';
+            $actions[] = 'allin';
         }
 
         if ($totalRoundBet == $currentBetAmountToJoin) {
-            $actions[] = 'aumentar';
-            $actions[] = 'all-in';
             $actions[] = 'check';
             $actions[] = 'aumentar';
+            $actions[] = 'allin';
             return $actions;
         }
 
