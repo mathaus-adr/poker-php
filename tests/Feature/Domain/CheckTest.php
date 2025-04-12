@@ -10,10 +10,11 @@ use App\Models\RoomRound;
 use App\Models\RoundAction;
 use App\Models\RoundPlayer;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Event;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Bus::fake();
@@ -55,14 +56,18 @@ beforeEach(function () {
     ]);
 });
 
-test('example', function () {
-    $round = RoomRound::first();
-    $user = User::find($round->player_turn_id);
-    $totalPlayers = RoundPlayer::where('status', true)->count();
-    $this->assertDatabaseHas(RoomRound::class, ['player_turn_id' => $user->id, 'total_players_in_round' => $totalPlayers]);
-    $checkAction = app(Check::class);
-    $checkAction->check($round->room, $user);
-    $this->assertDatabaseHas(RoundAction::class, ['action' => 'check', 'user_id' => $user->id, 'room_round_id' => $round->id, 'amount' => 0]);
-    $this->assertDatabaseMissing(RoomRound::class, ['player_turn_id' => $user->id]);
-    $this->assertDatabaseHas(RoomRound::class, ['total_players_in_round' => $totalPlayers, 'total_pot' => 15]);
-})->group('game-domain');;
+describe('check game actions test', function () {
+    test('check', function () {
+        $round = RoomRound::first();
+        $user = User::find($round->player_turn_id);
+        $totalPlayers = RoundPlayer::where('status', true)->count();
+        $this->assertDatabaseHas(RoomRound::class,
+            ['player_turn_id' => $user->id, 'total_players_in_round' => $totalPlayers]);
+        $checkAction = app(Check::class);
+        $checkAction->check($round->room, $user);
+        $this->assertDatabaseHas(RoundAction::class,
+            ['action' => 'check', 'user_id' => $user->id, 'room_round_id' => $round->id, 'amount' => 0]);
+        $this->assertDatabaseMissing(RoomRound::class, ['player_turn_id' => $user->id]);
+        $this->assertDatabaseHas(RoomRound::class, ['total_players_in_round' => $totalPlayers, 'total_pot' => 15]);
+    })->group('check');
+})->group('game-domain');

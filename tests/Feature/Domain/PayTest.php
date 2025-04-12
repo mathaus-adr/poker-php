@@ -54,15 +54,18 @@ beforeEach(function () {
         'total_players_in_round' => $allUsersInRoom->count()
     ]);
 });
-
-test('if can pay and store entities with correct values', function () {
-    $round = RoomRound::first();
-    $user = User::find($round->player_turn_id);
-    $totalPlayers = RoundPlayer::where('status', true)->count();
-    $this->assertDatabaseHas(RoomRound::class, ['player_turn_id' => $user->id, 'total_players_in_round' => $totalPlayers]);
-    $payAction = app(Pay::class);
-    $payAction->execute($round->room, $user);
-    $this->assertDatabaseHas(RoundAction::class, ['action' => 'call', 'user_id' => $user->id, 'room_round_id' => $round->id, 'amount' => 5]);
-    $this->assertDatabaseMissing(RoomRound::class, ['player_turn_id' => $user->id]);
-    $this->assertDatabaseHas(RoomRound::class, ['total_players_in_round' => $totalPlayers, 'total_pot' => 20]);
-})->group('game-domain');;
+describe('pay action game action', function () {
+    test('if can pay and store entities with correct values', function () {
+        $round = RoomRound::first();
+        $user = User::find($round->player_turn_id);
+        $totalPlayers = RoundPlayer::where('status', true)->count();
+        $this->assertDatabaseHas(RoomRound::class,
+            ['player_turn_id' => $user->id, 'total_players_in_round' => $totalPlayers]);
+        $payAction = app(Pay::class);
+        $payAction->execute($round->room, $user);
+        $this->assertDatabaseHas(RoundAction::class,
+            ['action' => 'call', 'user_id' => $user->id, 'room_round_id' => $round->id, 'amount' => 5]);
+        $this->assertDatabaseMissing(RoomRound::class, ['player_turn_id' => $user->id]);
+        $this->assertDatabaseHas(RoomRound::class, ['total_players_in_round' => $totalPlayers, 'total_pot' => 20]);
+    });
+})->group('game-domain');

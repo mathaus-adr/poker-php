@@ -1,6 +1,7 @@
 <?php
 
-use App\Domains\Game\Player\Actions\Fold;
+use App\Domains\Game\Player\Actions\Pay;
+use App\Domains\Game\Player\Actions\Raise;
 use App\Domains\Game\Room\Actions\CreateRoom;
 use App\Domains\Game\Room\Actions\JoinRoom;
 use App\Domains\Game\StartPokerGame;
@@ -10,6 +11,7 @@ use App\Models\RoomRound;
 use App\Models\RoundAction;
 use App\Models\RoundPlayer;
 use App\Models\User;
+use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Event;
 
@@ -54,15 +56,26 @@ beforeEach(function () {
         'total_players_in_round' => $allUsersInRoom->count()
     ]);
 });
+describe('raise action game action', function () {
+    test('if can raise and store entities with correct values', function () {
+        $round = RoomRound::first();
+        $user = User::find($round->player_turn_id);
+        $totalPlayers = RoundPlayer::where('status', true)->count();
+        $this->assertDatabaseHas(RoomRound::class,
+            ['player_turn_id' => $user->id, 'total_players_in_round' => $totalPlayers]);
+        $raiseAction = app(Raise::class);
+        $raiseAction->raise($round->room, $user, 20);
+        $this->assertDatabaseHas(RoundAction::class,
+            ['action' => 'raise', 'user_id' => $user->id, 'room_round_id' => $round->id, 'amount' => 20]);
+        $this->assertDatabaseMissing(RoomRound::class, ['player_turn_id' => $user->id]);
+        $this->assertDatabaseHas(RoomRound::class,
+            ['total_players_in_round' => $totalPlayers, 'total_pot' => 35, 'current_bet_amount_to_join' => 25]);
+        $round->refresh();
+        $payAction = app(Pay::class);
 
-test('if can fold', function () {
-    $round = RoomRound::first();
-    $user = User::find($round->player_turn_id);
-    $totalPlayers = RoundPlayer::where('status', true)->count();
-    $this->assertDatabaseHas(RoomRound::class, ['player_turn_id' => $user->id, 'total_players_in_round' => $totalPlayers]);
-    $foldAction = app(Fold::class);
-    $foldAction->fold($round->room, $user);
-    $this->assertDatabaseHas(RoundAction::class, ['action' => 'fold', 'user_id' => $user->id, 'room_round_id' => $round->id]);
-    $this->assertDatabaseMissing(RoomRound::class, ['player_turn_id' => $user->id]);
-    $this->assertDatabaseHas(RoomRound::class, ['total_players_in_round' => $totalPlayers - 1]);
-})->group('game-domain');;
+        //        dd($round->player_turn_id);
+        $payAction->execute($round->room, User::find($round->player_turn_id));
+        $this->assertDatabaseHas(RoomRound::class,
+            ['total_players_in_round' => $totalPlayers, 'total_pot' => 60, 'current_bet_amount_to_join' => 25]);
+    });
+})->group('game-domain');
