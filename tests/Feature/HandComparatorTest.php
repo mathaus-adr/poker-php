@@ -1,6 +1,8 @@
 <?php
 
+use App\Domains\Game\Cards\Enums\Card;
 use App\Domains\Game\Cards\Enums\Hands;
+use App\Domains\Game\Cards\Enums\Suit;
 use App\Domains\Game\Cards\Hands\HandComparator;
 use App\Domains\Game\PokerGameState;
 use App\Domains\Game\Room\Actions\CreateRoom;
@@ -8,8 +10,10 @@ use App\Domains\Game\Room\Actions\JoinRoom;
 use App\Domains\Game\StartPokerGame;
 use App\Events\GameStatusUpdated;
 use App\Jobs\FoldInactiveUser;
+use App\Models\Room;
 use App\Models\RoomRound;
 use App\Models\RoundAction;
+use App\Models\RoundPlayer;
 use App\Models\User;
 use Illuminate\Support\Facades\Bus;
 
@@ -87,4 +91,542 @@ it('should declare the strongest hand from table when init a game', function () 
     expect($result['score'])->toEqual($score);
     expect($result['cards'])->toBeArray();
     expect($result['cards'])->toHaveCount($cardCount);
+    expect($result['private_cards_score'])->toBeInt();
+    expect($result['private_cards_score'])->toEqual(22);
 })->group('game-domain');;
+
+
+it('should declare strongest two pair', function () {
+    Event::fakeFor(function () {
+        $room = Room::factory()->create();
+        $users = User::factory()->count(2)->create();
+        $firstUser = $users->first();
+        $secondUser = $users->last();
+        $roomRound = RoomRound::factory()->create([
+            'room_id' => $room->id,
+        ]);
+
+        $room->update([
+            'data' => [
+                'flop' => [
+                    ['carta' => Card::Ace->value, 'naipe' => Suit::Hearts->name],
+                    ['carta' => Card::King->value, 'naipe' => Suit::Hearts->name],
+                    ['carta' => Card::Nine->value, 'naipe' => Suit::Spades->name],
+                ]
+            ]
+        ]);
+
+        RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $firstUser->id,
+            'status' => true,
+            'order' => 1,
+            'user_info' => [
+                ['carta' => Card::Ace->value, 'naipe' => Suit::Diamonds->name],
+                ['carta' => Card::Nine->value, 'naipe' => Suit::Clubs->name],
+            ]
+        ]);
+
+        RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $secondUser->id,
+            'status' => true,
+            'order' => 2,
+            'user_info' => [
+                ['carta' => Card::Ace->value, 'naipe' => Suit::Clubs->name],
+                ['carta' => Card::King->value, 'naipe' => Suit::Clubs->name],
+            ]
+        ]);
+
+        $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
+
+        expect($calculatedStrongestHand)->not->toBeNull();
+        expect($calculatedStrongestHand['hand'])->toEqual(Hands::TwoPair->value);
+        expect($calculatedStrongestHand['user_id'])->toEqual($secondUser->id);
+    });
+
+})->group('two-pair');
+
+it('should declare strongest three of kind', function () {
+    Event::fakeFor(function () {
+        $room = Room::factory()->create();
+        $users = User::factory()->count(2)->create();
+        $firstUser = $users->first();
+        $secondUser = $users->last();
+        $roomRound = RoomRound::factory()->create([
+            'room_id' => $room->id,
+        ]);
+
+        $room->update([
+            'data' => [
+                'flop' => [
+                    ['carta' => Card::Ace->value, 'naipe' => Suit::Hearts->name],
+                    ['carta' => Card::King->value, 'naipe' => Suit::Hearts->name],
+                    ['carta' => Card::Nine->value, 'naipe' => Suit::Spades->name],
+                ]
+            ]
+        ]);
+
+        $firstRoundPlayer = RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $firstUser->id,
+            'status' => true,
+            'order' => 1,
+            'user_info' => [
+                ['carta' => Card::Ace->value, 'naipe' => Suit::Diamonds->name],
+                ['carta' => Card::Ace->value, 'naipe' => Suit::Clubs->name],
+            ]
+        ]);
+
+        RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $secondUser->id,
+            'status' => true,
+            'order' => 2,
+            'user_info' => [
+                ['carta' => Card::King->value, 'naipe' => Suit::Clubs->name],
+                ['carta' => Card::King->value, 'naipe' => Suit::Diamonds->name],
+            ]
+        ]);
+
+        $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
+
+        expect($calculatedStrongestHand)->not->toBeNull();
+        expect($calculatedStrongestHand['hand'])->toEqual(Hands::ThreeOfAKind->value);
+        expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+        expect($calculatedStrongestHand['score'])->toEqual(14 * 3);
+
+        $firstRoundPlayer->update([
+            'user_info' => [
+                ['carta' => Card::Nine->value, 'naipe' => Suit::Diamonds->name],
+                ['carta' => Card::Nine->value, 'naipe' => Suit::Clubs->name],
+            ]
+        ]);
+
+
+        $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
+
+        expect($calculatedStrongestHand)->not->toBeNull();
+        expect($calculatedStrongestHand['hand'])->toEqual(Hands::ThreeOfAKind->value);
+        expect($calculatedStrongestHand['user_id'])->toEqual($secondUser->id);
+        expect($calculatedStrongestHand['score'])->toEqual(13 * 3);
+    });
+})->group('three-of-a-kind');
+
+it('should declare strongest four of kind', function () {
+    Event::fakeFor(function () {
+        $room = Room::factory()->create();
+        $users = User::factory()->count(2)->create();
+        $firstUser = $users->first();
+        $secondUser = $users->last();
+        $roomRound = RoomRound::factory()->create([
+            'room_id' => $room->id,
+        ]);
+
+        $room->update([
+            'data' => [
+                'flop' => [
+                    ['carta' => Card::Ace->value, 'naipe' => Suit::Hearts->name],
+                    ['carta' => Card::King->value, 'naipe' => Suit::Hearts->name],
+                    ['carta' => Card::King->value, 'naipe' => Suit::Spades->name],
+                ],
+                'turn' => [
+                    ['carta' => Card::Ace->value, 'naipe' => Suit::Diamonds->name],
+                ],
+            ]
+        ]);
+
+        $firstRoundPlayer = RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $firstUser->id,
+            'status' => true,
+            'order' => 1,
+            'user_info' => [
+                ['carta' => Card::Ace->value, 'naipe' => Suit::Diamonds->name],
+                ['carta' => Card::Ace->value, 'naipe' => Suit::Clubs->name],
+            ]
+        ]);
+
+        RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $secondUser->id,
+            'status' => true,
+            'order' => 2,
+            'user_info' => [
+                ['carta' => Card::King->value, 'naipe' => Suit::Clubs->name],
+                ['carta' => Card::King->value, 'naipe' => Suit::Diamonds->name],
+            ]
+        ]);
+
+        $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
+
+        expect($calculatedStrongestHand)->not->toBeNull();
+        expect($calculatedStrongestHand['hand'])->toEqual(Hands::FourOfAKind->value);
+        expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+        expect($calculatedStrongestHand['score'])->toEqual(14 * 4);
+
+        $room->update([
+            'data' => [
+                'flop' => [
+                    ['carta' => Card::Nine->value, 'naipe' => Suit::Hearts->name],
+                    ['carta' => Card::King->value, 'naipe' => Suit::Hearts->name],
+                    ['carta' => Card::King->value, 'naipe' => Suit::Spades->name],
+                ],
+                'turn' => [
+                    ['carta' => Card::Nine->value, 'naipe' => Suit::Diamonds->name],
+                ],
+            ]
+        ]);
+
+        $firstRoundPlayer->update([
+            'user_info' =>
+                [
+                    ['carta' => Card::Nine->value, 'naipe' => Suit::Spades->name],
+                    ['carta' => Card::Nine->value, 'naipe' => Suit::Clubs->name],
+                ]
+        ]);
+
+        $roomRound->refresh();
+
+        $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
+//        dd($calculatedStrongestHand,'aqui');
+        expect($calculatedStrongestHand)->not->toBeNull();
+        expect($calculatedStrongestHand['hand'])->toEqual(Hands::FourOfAKind->value);
+        expect($calculatedStrongestHand['user_id'])->toEqual($secondUser->id);
+        expect($calculatedStrongestHand['score'])->toEqual(13 * 4);
+    });
+})->group('four-of-a-kind');
+
+it('should declare strongest full house', function () {
+    Event::fakeFor(function () {
+        $room = Room::factory()->create();
+        $users = User::factory()->count(2)->create();
+        $firstUser = $users->first();
+        $secondUser = $users->last();
+        $roomRound = RoomRound::factory()->create([
+            'room_id' => $room->id,
+        ]);
+
+        $room->update([
+            'data' => [
+                'flop' => [
+                    ['carta' => Card::King->value, 'naipe' => Suit::Diamonds->name],
+                    ['carta' => Card::King->value, 'naipe' => Suit::Hearts->name],
+                    ['carta' => Card::King->value, 'naipe' => Suit::Spades->name],
+                ],
+            ]
+        ]);
+
+        $firstRoundPlayer = RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $firstUser->id,
+            'status' => true,
+            'order' => 1,
+            'user_info' => [
+                ['carta' => Card::Ace->value, 'naipe' => Suit::Diamonds->name],
+                ['carta' => Card::Ace->value, 'naipe' => Suit::Clubs->name],
+            ]
+        ]);
+
+        RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $secondUser->id,
+            'status' => true,
+            'order' => 2,
+            'user_info' => [
+                ['carta' => Card::Queen->value, 'naipe' => Suit::Clubs->name],
+                ['carta' => Card::Queen->value, 'naipe' => Suit::Diamonds->name],
+            ]
+        ]);
+
+        $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
+
+        expect($calculatedStrongestHand)->not->toBeNull();
+        expect($calculatedStrongestHand['hand'])->toEqual(Hands::FullHouse->value);
+        expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+        expect($calculatedStrongestHand['score'])->toEqual((3 * 13) + (2 * 14));
+
+
+        $firstRoundPlayer->update([
+            'user_info' =>
+                [
+                    ['carta' => Card::Nine->value, 'naipe' => Suit::Spades->name],
+                    ['carta' => Card::Nine->value, 'naipe' => Suit::Clubs->name],
+                ]
+        ]);
+
+        $roomRound->refresh();
+
+        $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
+
+        expect($calculatedStrongestHand)->not->toBeNull();
+        expect($calculatedStrongestHand['hand'])->toEqual(Hands::FullHouse->value);
+        expect($calculatedStrongestHand['user_id'])->toEqual($secondUser->id);
+        expect($calculatedStrongestHand['score'])->toEqual((3 * 13) + (2 * 12));
+    });
+})->group('full-house');
+
+it('should declare strongest flush', function () {
+    Event::fakeFor(function () {
+        $room = Room::factory()->create();
+        $users = User::factory()->count(2)->create();
+        $firstUser = $users->first();
+        $secondUser = $users->last();
+        $roomRound = RoomRound::factory()->create([
+            'room_id' => $room->id,
+        ]);
+
+        $room->update([
+            'data' => [
+                'flop' => [
+                    ['carta' => Card::Four->value, 'naipe' => Suit::Diamonds->name],
+                    ['carta' => Card::Five->value, 'naipe' => Suit::Diamonds->name],
+                    ['carta' => Card::Ten->value, 'naipe' => Suit::Diamonds->name],
+                ],
+            ]
+        ]);
+
+        $firstRoundPlayer = RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $firstUser->id,
+            'status' => true,
+            'order' => 1,
+            'user_info' => [
+                ['carta' => Card::Three->value, 'naipe' => Suit::Diamonds->name],
+                ['carta' => Card::Seven->value, 'naipe' => Suit::Diamonds->name],
+            ]
+        ]);
+
+        RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $secondUser->id,
+            'status' => true,
+            'order' => 2,
+            'user_info' => [
+                ['carta' => Card::Two->value, 'naipe' => Suit::Diamonds->name],
+                ['carta' => Card::Ace->value, 'naipe' => Suit::Diamonds->name],
+            ]
+        ]);
+
+        $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
+
+        expect($calculatedStrongestHand)->not->toBeNull();
+        expect($calculatedStrongestHand['hand'])->toEqual(Hands::Flush->value);
+        expect($calculatedStrongestHand['user_id'])->toEqual($secondUser->id);
+        expect($calculatedStrongestHand['score'])->toEqual(14 + 2 + 4 + 5 + 10);
+
+
+        $firstRoundPlayer->update([
+            'user_info' =>
+                [
+                    ['carta' => Card::Eight->value, 'naipe' => Suit::Diamonds->name],
+                    ['carta' => Card::Jack->value, 'naipe' => Suit::Diamonds->name],
+                ]
+        ]);
+
+        $roomRound->refresh();
+
+        $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
+
+        expect($calculatedStrongestHand)->not->toBeNull();
+        expect($calculatedStrongestHand['hand'])->toEqual(Hands::Flush->value);
+        expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+        expect($calculatedStrongestHand['score'])->toEqual(4 + 5 + 10 + 8 + 11);
+    });
+})->group('flush');
+
+it('should declare strongest straight', function () {
+
+    Event::fakeFor(function () {
+        $room = Room::factory()->create();
+        $users = User::factory()->count(2)->create();
+        $firstUser = $users->first();
+        $secondUser = $users->last();
+        $roomRound = RoomRound::factory()->create([
+            'room_id' => $room->id,
+        ]);
+
+        $room->update([
+            'data' => [
+                'flop' => [
+                    ['carta' => Card::Four->value, 'naipe' => Suit::Diamonds->name],
+                    ['carta' => Card::Five->value, 'naipe' => Suit::Diamonds->name],
+                    ['carta' => Card::Six->value, 'naipe' => Suit::Diamonds->name],
+                ],
+            ]
+        ]);
+
+        $firstRoundPlayer = RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $firstUser->id,
+            'status' => true,
+            'order' => 1,
+            'user_info' => [
+                ['carta' => Card::Three->value, 'naipe' => Suit::Diamonds->name],
+                ['carta' => Card::Seven->value, 'naipe' => Suit::Clubs->name],
+            ]
+        ]);
+
+        RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $secondUser->id,
+            'status' => true,
+            'order' => 2,
+            'user_info' => [
+                ['carta' => Card::Two->value, 'naipe' => Suit::Diamonds->name],
+                ['carta' => Card::Three->value, 'naipe' => Suit::Clubs->name],
+            ]
+        ]);
+
+        $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
+
+        expect($calculatedStrongestHand)->not->toBeNull();
+        expect($calculatedStrongestHand['hand'])->toEqual(Hands::Straight->value);
+        expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+        expect($calculatedStrongestHand['score'])->toEqual(3 + 7 + 4 + 5 + 6);
+
+
+        $firstRoundPlayer->update([
+            'user_info' =>
+                [
+                    ['carta' => Card::Seven->value, 'naipe' => Suit::Diamonds->name],
+                    ['carta' => Card::Eight->value, 'naipe' => Suit::Clubs->name],
+                ]
+        ]);
+
+        $roomRound->refresh();
+
+        $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
+
+        expect($calculatedStrongestHand)->not->toBeNull();
+        expect($calculatedStrongestHand['hand'])->toEqual(Hands::Straight->value);
+        expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+        expect($calculatedStrongestHand['score'])->toEqual(4 + 5 + 6 + 8 + 7);
+    });
+})->group('straight');
+
+it('should declare strongest straight flush', function () {
+    Event::fakeFor(function () {
+        $room = Room::factory()->create();
+        $users = User::factory()->count(2)->create();
+        $firstUser = $users->first();
+        $secondUser = $users->last();
+        $roomRound = RoomRound::factory()->create([
+            'room_id' => $room->id,
+        ]);
+
+        $room->update([
+            'data' => [
+                'flop' => [
+                    ['carta' => Card::Four->value, 'naipe' => Suit::Diamonds->name],
+                    ['carta' => Card::Five->value, 'naipe' => Suit::Diamonds->name],
+                    ['carta' => Card::Six->value, 'naipe' => Suit::Diamonds->name],
+                ],
+            ]
+        ]);
+
+        $firstRoundPlayer = RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $firstUser->id,
+            'status' => true,
+            'order' => 1,
+            'user_info' => [
+                ['carta' => Card::Three->value, 'naipe' => Suit::Diamonds->name],
+                ['carta' => Card::Seven->value, 'naipe' => Suit::Diamonds->name],
+            ]
+        ]);
+
+        RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $secondUser->id,
+            'status' => true,
+            'order' => 2,
+            'user_info' => [
+                ['carta' => Card::Two->value, 'naipe' => Suit::Diamonds->name],
+                ['carta' => Card::Three->value, 'naipe' => Suit::Diamonds->name],
+            ]
+        ]);
+
+        $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
+
+        expect($calculatedStrongestHand)->not->toBeNull();
+        expect($calculatedStrongestHand['hand'])->toEqual(Hands::StraightFlush->value);
+        expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+        expect($calculatedStrongestHand['score'])->toEqual(3 + 7 + 4 + 5 + 6);
+
+
+        $firstRoundPlayer->update([
+            'user_info' =>
+                [
+                    ['carta' => Card::Seven->value, 'naipe' => Suit::Diamonds->name],
+                    ['carta' => Card::Eight->value, 'naipe' => Suit::Diamonds->name],
+                ]
+        ]);
+
+        $roomRound->refresh();
+
+        $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
+
+        expect($calculatedStrongestHand)->not->toBeNull();
+        expect($calculatedStrongestHand['hand'])->toEqual(Hands::StraightFlush->value);
+        expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+        expect($calculatedStrongestHand['score'])->toEqual(4 + 5 + 6 + 8 + 7);
+    });
+})->group('straight-flush');
+
+
+it('should declare the strongest kicker hand (private cards)', function () {
+    Event::fakeFor(function () {
+        $room = Room::factory()->create();
+        $users = User::factory()->count(2)->create();
+        $firstUser = $users->first();
+        $secondUser = $users->last();
+        $roomRound = RoomRound::factory()->create([
+            'room_id' => $room->id,
+        ]);
+
+        $room->update([
+            'data' => [
+                'flop' => [
+                    ['carta' => Card::Ace->value, 'naipe' => Suit::Hearts->name],
+                    ['carta' => Card::Ace->value, 'naipe' => Suit::Diamonds->name],
+                    ['carta' => Card::Ace->value, 'naipe' => Suit::Spades->name],
+                ],
+                'turn' => [
+                    ['carta' => Card::King->value, 'naipe' => Suit::Clubs->name],
+                ],
+                'river' => [
+                    ['carta' => Card::King->value, 'naipe' => Suit::Hearts->name],
+                ]
+            ]
+        ]);
+
+        $firstRoundPlayer = RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $firstUser->id,
+            'status' => true,
+            'order' => 1,
+            'user_info' => [
+                ['carta' => Card::Two->value, 'naipe' => Suit::Diamonds->name],
+                ['carta' => Card::Four->value, 'naipe' => Suit::Clubs->name],
+            ]
+        ]);
+
+        RoundPlayer::factory()->create([
+            'room_round_id' => $roomRound->id,
+            'user_id' => $secondUser->id,
+            'status' => true,
+            'order' => 2,
+            'user_info' => [
+                ['carta' => Card::Two->value, 'naipe' => Suit::Clubs->name],
+                ['carta' => Card::Three->value, 'naipe' => Suit::Diamonds->name],
+            ]
+        ]);
+
+        $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
+
+        expect($calculatedStrongestHand)->not->toBeNull();
+        expect($calculatedStrongestHand['hand'])->toEqual(Hands::FullHouse->value);
+        expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+    });
+})->group('kicker-hand');

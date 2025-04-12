@@ -207,7 +207,7 @@ class HandCalculator
     {
         $allCards = collect($cards);
         $uniqueCardsCollection = $allCards->unique('carta');
-
+//        dd($uniqueCardsCollection);
         if ($uniqueCardsCollection->count() < 5) {
             return false;
         }
@@ -216,7 +216,7 @@ class HandCalculator
         $uniqueCardsCollection->shift();
 
         foreach ($uniqueCardsCollection as $uniqueCard) {
-            if ($uniqueCard['carta'] != $actualValue + 1) {
+            if ($uniqueCard['carta'] != $actualValue - 1) {
                 return false;
             }
             $actualValue = $uniqueCard['carta'];
@@ -276,11 +276,11 @@ class HandCalculator
 
         $firstCard = $bestCards->shift();
 
-        if ($firstCard['carta'] != CardEnum::Ace->value) {
+        if ($firstCard['carta'] != CardEnum::King->value) {
             return false;
         }
 
-        if ($bestCards[0]['carta'] != CardEnum::Ten->value) {
+        if ($bestCards[0]['carta'] != CardEnum::Queen->value) {
             return false;
         }
 
@@ -288,11 +288,11 @@ class HandCalculator
             return false;
         }
 
-        if ($bestCards[2]['carta'] != CardEnum::Queen->value) {
+        if ($bestCards[2]['carta'] != CardEnum::Ten->value) {
             return false;
         }
 
-        if ($bestCards[3]['carta'] != CardEnum::King->value) {
+        if ($bestCards[3]['carta'] != CardEnum::Ace->value) {
             return false;
         }
 

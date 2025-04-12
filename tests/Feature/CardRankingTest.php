@@ -14,10 +14,12 @@ it('test card ranking royal straight flush', function () {
         ['naipe' => Suit::Clubs->value, 'carta' => Card::Queen->value],
         ['naipe' => Suit::Clubs->value, 'carta' => Card::King->value],
     ];
-
+    usort($cards, function ($a, $b) {
+        return $a['carta'] <= $b['carta'];
+    });
     $handCalculator = new HandCalculator();
     $hand = $handCalculator->calculateBestHand($cards);
-    expect($hand)->toEqual(['hand' => Hands::RoyalFlush->value, 'cards' => [31, 310, 311, 312, 313]]);
+    expect($hand)->toEqual(['hand' => Hands::RoyalFlush->value, 'cards' => [ 313, 312, 311, 310, 31]]);
 })->group('game-domain');;
 
 it('test card ranking straight flush', function () {
@@ -29,10 +31,12 @@ it('test card ranking straight flush', function () {
         ['naipe' => Suit::Clubs->value, 'carta' => Card::Four->value],
         ['naipe' => Suit::Clubs->value, 'carta' => Card::Five->value],
     ];
-
+    usort($cards, function ($a, $b) {
+        return $a['carta'] <= $b['carta'];
+    });
     $handCalculator = new HandCalculator();
     $hand = $handCalculator->calculateBestHand($cards);
-    expect($hand)->toEqual(['hand' => Hands::StraightFlush->value, 'cards' => [31, 32, 33, 34, 35]]);
+    expect($hand)->toEqual(['hand' => Hands::StraightFlush->value, 'cards' => [35, 34, 33,32, 31]]);
 })->group('game-domain');;
 
 
@@ -86,10 +90,12 @@ it('test card ranking straight', function () {
         ['naipe' => Suit::Spades->value, 'carta' => Card::Five->value],
         ['naipe' => Suit::Diamonds->value, 'carta' => Card::Six->value],
     ];
-
+    usort($cards, function ($a, $b) {
+        return $a['carta'] <= $b['carta'];
+    });
     $handCalculator = new HandCalculator();
     $hand = $handCalculator->calculateBestHand($cards);
-    expect($hand)->toEqual(['hand' => Hands::Straight->value, 'cards' => [32, 43, 14, 25, 46]]);
+    expect($hand)->toEqual(['hand' => Hands::Straight->value, 'cards' => [46,25,14, 43,32]]);
 })->group('game-domain');;
 
 it('test card ranking three of a kind', function () {
