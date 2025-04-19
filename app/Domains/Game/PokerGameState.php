@@ -238,22 +238,6 @@ class PokerGameState implements LoadGameStateInterface
         return $cards;
     }
 
-    public function isAllPlayersWithSameBet(): bool
-    {
-        $actionsCollection = collect($this->roundActions);
-        $actionsGroupedByIdCollection = $actionsCollection->groupBy('user_id');
-        $firstPlayerTotalBet = $actionsGroupedByIdCollection->shift()->sum('amount');
-        $allPlayersWithSameBet = true;
-        $actionsGroupedByIdCollection->each(function ($playerActions) use ($firstPlayerTotalBet, &$allPlayersWithSameBet) {
-            $playerTotalBet = $playerActions->sum('amount');
-            if ($playerTotalBet !== $firstPlayerTotalBet) {
-                $allPlayersWithSameBet = false;
-            }
-        });
-
-        return $allPlayersWithSameBet;
-    }
-
     public function isShowDown(): bool
     {
         return $this->isShowDown;
