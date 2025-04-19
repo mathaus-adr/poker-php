@@ -14,23 +14,23 @@ class RoyalFlushEvaluator extends HandEvaluator
     {
         $bestCards = collect($this->cards)->shift(5);
 
-        if ($bestCards[0]['carta'] != CardEnum::King->value) {
+        if ($bestCards[0]->carta != CardEnum::King->value) {
             return null;
         }
 
-        if ($bestCards[1]['carta'] != CardEnum::Queen->value) {
+        if ($bestCards[1]->carta != CardEnum::Queen->value) {
             return null;
         }
 
-        if ($bestCards[2]['carta'] != CardEnum::Jack->value) {
+        if ($bestCards[2]->carta != CardEnum::Jack->value) {
             return null;
         }
 
-        if ($bestCards[3]['carta'] != CardEnum::Ten->value) {
+        if ($bestCards[3]->carta != CardEnum::Ten->value) {
             return null;
         }
 
-        if ($bestCards[4]['carta'] != CardEnum::Ace->value) {
+        if ($bestCards[4]->carta != CardEnum::Ace->value) {
             return null;
         }
 

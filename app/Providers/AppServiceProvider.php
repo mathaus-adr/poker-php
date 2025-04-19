@@ -7,8 +7,10 @@ use App\Domains\Game\Cards\Hands\Evaluators\FourOfAKindEvaluator;
 use App\Domains\Game\Cards\Hands\Evaluators\FullHouseEvaluator;
 use App\Domains\Game\Cards\Hands\Evaluators\HighCardEvaluator;
 use App\Domains\Game\Cards\Hands\Evaluators\Interfaces\HandEvaluatorInterface;
+use App\Domains\Game\Cards\Hands\Evaluators\NullHandEvaluator;
 use App\Domains\Game\Cards\Hands\Evaluators\OnePairEvaluator;
 use App\Domains\Game\Cards\Hands\Evaluators\RoyalFlushEvaluator;
+use App\Domains\Game\Cards\Hands\Evaluators\SortCardsForEvaluator;
 use App\Domains\Game\Cards\Hands\Evaluators\StraightEvaluator;
 use App\Domains\Game\Cards\Hands\Evaluators\StraightFlushEvaluator;
 use App\Domains\Game\Cards\Hands\Evaluators\ThreeOfAKindEvaluator;
@@ -32,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(HandEvaluatorInterface::class, function ($app, $attributes) {
             return $app->make(HandEvaluator::class, $attributes + [
                     'handEvaluators' => [
+                        NullHandEvaluator::class,
                         RoyalFlushEvaluator::class,
                         StraightFlushEvaluator::class,
                         FourOfAKindEvaluator::class,
@@ -42,7 +45,8 @@ class AppServiceProvider extends ServiceProvider
                         TwoPairEvaluator::class,
                         OnePairEvaluator::class,
                         HighCardEvaluator::class,
-                    ]
+                    ],
+                    'transformCards' => true,
                 ]);
         });
     }

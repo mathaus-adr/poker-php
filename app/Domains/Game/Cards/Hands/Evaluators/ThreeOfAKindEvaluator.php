@@ -13,7 +13,7 @@ class ThreeOfAKindEvaluator extends HandEvaluator
     {
         $cardsCollection = collect($this->cards);
         $threeKinds = $cardsCollection->groupBy(function ($card) {
-            return $card['carta'];
+            return $card->carta;
         });
 
         //TODO Ace three of kind

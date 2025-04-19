@@ -14,7 +14,7 @@ class HighCardEvaluator extends HandEvaluator
         $cardsCollection = collect($this->cards);
 
         $aceCollection = $cardsCollection->filter(function ($card) {
-            return $card['carta'] == CardEnum::Ace->value;
+            return $card->carta == CardEnum::Ace->value;
         });
 
         if ($aceCollection->count() > 0) {

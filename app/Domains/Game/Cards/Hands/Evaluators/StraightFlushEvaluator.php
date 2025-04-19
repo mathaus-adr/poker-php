@@ -30,7 +30,7 @@ class StraightFlushEvaluator extends HandEvaluator
         $flushCards->shift();
 
         foreach ($flushCards as $uniqueCard) {
-            if ($uniqueCard['carta'] != $actualValue['carta'] - 1) {
+            if ($uniqueCard->carta != $actualValue->carta - 1) {
                 return null;
             }
             $actualValue = $uniqueCard;

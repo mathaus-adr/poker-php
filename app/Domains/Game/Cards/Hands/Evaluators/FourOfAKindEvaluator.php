@@ -14,7 +14,7 @@ class FourOfAKindEvaluator extends HandEvaluator
         $cardsCollection = collect($this->cards);
 
         $fourOfAKindCollection = $cardsCollection->groupBy(function ($card) {
-            return $card['carta'];
+            return $card->carta;
         });
 
         $filteredFourOfAKind = $fourOfAKindCollection->filter(function ($fourOfAKindCollection) {

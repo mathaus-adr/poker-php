@@ -13,7 +13,7 @@ class OnePairEvaluator extends HandEvaluator
         $cardsCollection = collect($this->cards);
 
         $pairs = $cardsCollection->groupBy(function ($card) {
-            return $card['carta'];
+            return $card->carta;
         });
 
         $filteredPairs = $pairs->filter(function ($pairCollection) {
@@ -23,6 +23,7 @@ class OnePairEvaluator extends HandEvaluator
         if ($filteredPairs->isEmpty()) {
             return null;
         }
+
         $pair = $filteredPairs->first();
 
         return new Hand(

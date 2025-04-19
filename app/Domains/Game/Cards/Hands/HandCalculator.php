@@ -14,13 +14,13 @@ class HandCalculator
     {
         $handEvaluator = app(HandEvaluatorInterface::class, ['cards' => $cards]);
         $hand = $handEvaluator->execute();
-        return ['hand' => $hand->hand->value, 'cards' => $this->mapCards($hand->cards)];
+        return ['hand' => $hand?->hand?->value, 'cards' => $this->mapCards($hand->cards)];
     }
 
     private function mapCards($cards): array
     {
         return collect($cards)->map(function ($card) {
-            return $card['naipe'] . $card['carta'];
+            return $card->naipe . $card->carta;
         })->toArray();
     }
 }

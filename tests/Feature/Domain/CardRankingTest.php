@@ -15,9 +15,6 @@ describe('card ranking', function () {
             ['naipe' => Suit::Clubs->value, 'carta' => Card::Queen->value],
             ['naipe' => Suit::Clubs->value, 'carta' => Card::King->value],
         ];
-        usort($cards, function ($a, $b) {
-            return $a['carta'] <= $b['carta'];
-        });
         $handCalculator = new HandCalculator();
         $hand = $handCalculator->calculateBestHand($cards);
         expect($hand)->toEqual(['hand' => Hands::RoyalFlush->value, 'cards' => [ 313, 312, 311, 310, 31]]);
@@ -32,9 +29,7 @@ describe('card ranking', function () {
             ['naipe' => Suit::Clubs->value, 'carta' => Card::Four->value],
             ['naipe' => Suit::Clubs->value, 'carta' => Card::Five->value],
         ];
-        usort($cards, function ($a, $b) {
-            return $a['carta'] <= $b['carta'];
-        });
+
         $handCalculator = new HandCalculator();
         $hand = $handCalculator->calculateBestHand($cards);
         expect($hand)->toEqual(['hand' => Hands::StraightFlush->value, 'cards' => [35, 34, 33,32, 31]]);
@@ -52,7 +47,8 @@ describe('card ranking', function () {
 
         $handCalculator = new HandCalculator();
         $hand = $handCalculator->calculateBestHand($cards);
-        expect($hand)->toEqual(['hand' => Hands::FourOfAKind->value,'cards' =>  [31, 41, 11, 21]]);
+        expect($hand['hand'])->toEqual(Hands::FourOfAKind->value);
+        expect($hand['cards'])->toContainEqual(31, 41, 11, 21);
     })->group('card-ranking', 'four-of-a-kind');;
 
     it('test card ranking full house', function () {
@@ -66,10 +62,11 @@ describe('card ranking', function () {
 
         $handCalculator = new HandCalculator();
         $hand = $handCalculator->calculateBestHand($cards);
-        expect($hand)->toEqual(['hand' => Hands::FullHouse->value, 'cards' => [31, 41, 11, 313, 413]]);
+        expect($hand['hand'])->toEqual(Hands::FullHouse->value);
+        expect($hand['cards'])->toContainEqual(31, 41, 11, 313, 413);
     })->group('card-ranking', 'full-house');;
 
-    it('test card ranking flush', function () {
+    it('test card ranking flush', closure: function () {
         $cards = [
             ['naipe' => Suit::Clubs->value, 'carta' => Card::Two->value],
             ['naipe' => Suit::Clubs->value, 'carta' => Card::Four->value],
@@ -80,7 +77,8 @@ describe('card ranking', function () {
 
         $handCalculator = new HandCalculator();
         $hand = $handCalculator->calculateBestHand($cards);
-        expect($hand)->toEqual(['hand' => Hands::Flush->value, 'cards' => [32, 34, 37, 39, 311]]);
+        expect($hand['hand'])->toEqual(Hands::Flush->value);
+        expect($hand['cards'])->toContainEqual(32, 34, 37, 39, 311);
     })->group('card-ranking', 'flush');;
 
     it('test card ranking straight', function () {
@@ -110,7 +108,9 @@ describe('card ranking', function () {
 
         $handCalculator = new HandCalculator();
         $hand = $handCalculator->calculateBestHand($cards);
-        expect($hand)->toEqual(['hand' => Hands::ThreeOfAKind->value, 'cards' => [35, 45, 15]]);
+
+        expect($hand['hand'])->toEqual(Hands::ThreeOfAKind->value);
+        expect($hand['cards'])->toContainEqual(35, 45, 15);
     })->group('card-ranking', 'three-of-a-kind');;
 
     it('test card ranking two pair', function () {
@@ -124,7 +124,8 @@ describe('card ranking', function () {
 
         $handCalculator = new HandCalculator();
         $hand = $handCalculator->calculateBestHand($cards);
-        expect($hand)->toEqual(['hand' => Hands::TwoPair->value, 'cards' => [35, 45, 111, 411]]);
+        expect($hand['hand'])->toEqual(Hands::TwoPair->value);
+        expect($hand['cards'])->toContainEqual(35, 45, 111, 411);
     })->group('card-ranking', 'two-pair');;
 
     it('test card ranking one pair', function () {

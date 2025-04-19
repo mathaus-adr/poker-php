@@ -12,7 +12,7 @@ class TwoPairEvaluator extends HandEvaluator
     {
         $cardsCollection = collect($this->cards);
         $pairs = $cardsCollection->groupBy(function ($card) {
-            return $card['carta'];
+            return $card->carta;
         });
 
         $filteredPairs = $pairs->filter(function ($pairCollection) {

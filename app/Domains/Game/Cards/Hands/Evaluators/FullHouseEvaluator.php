@@ -14,7 +14,7 @@ class FullHouseEvaluator extends HandEvaluator
         $cardsCollection = collect($this->cards);
 
         $threeKinds = $cardsCollection->groupBy(function ($card) {
-            return $card['carta'];
+            return $card->carta;
         });
 
         $filteredThreeKinds = $threeKinds->filter(function ($threeKindCollection) {
@@ -27,7 +27,7 @@ class FullHouseEvaluator extends HandEvaluator
         $threeOfKind = $threeOfKind->first();
 
         $pairs = $cardsCollection->groupBy(function ($card) {
-            return $card['carta'];
+            return $card->carta;
         });
 
         $filteredPairs = $pairs->filter(function ($pairCollection) {
