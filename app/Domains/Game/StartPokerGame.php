@@ -46,9 +46,7 @@ readonly class StartPokerGame
 
 
         $playerTurns = $players->push($dealerAndBigBlind->shift(), $dealerAndBigBlind->shift());
-        //penultimo
         $currentRoom['dealer'] = $playerTurns[$playerTurns->count() - 2];
-        //ultimo
         $currentRoom['big_blind'] = $playerTurns[$playerTurns->count() - 1];
 
         $currentRoom['small_blind'] = $playerTurns->first();
@@ -107,7 +105,6 @@ readonly class StartPokerGame
 
         $roundActionData = $data['player_bets'];
         $room->data = $data;
-//        $room->player_turn_id = $data['current_player_to_bet']['id'];
         $room->save();
 
         foreach ($playerTurns as $playerCards) {

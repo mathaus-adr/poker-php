@@ -15,7 +15,6 @@ class ThreeOfAKindEvaluator extends HandEvaluator
             return $card->carta;
         });
 
-        //TODO Ace three of kind
         $filteredThreeKinds = $threeKinds->filter(function ($threeKindCollection) use (&$threeOfKindCount) {
             if ($threeOfKindCount == 1) {
                 return false;
