@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Game\Cards\Hands;
+namespace App\Domains\Game\Cards\Hands\ValueObjects;
 
 use App\Domains\Game\Cards\Enums\Hands;
 

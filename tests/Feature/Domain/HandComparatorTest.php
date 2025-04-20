@@ -86,13 +86,21 @@ describe('hand comparator between players tests ', function () {
         $cardCount = 2;
         $result = app(HandComparator::class)->execute(RoomRound::first());
         expect($result)->not->toBeNull();
-        expect($result['hand'])->toEqual(Hands::OnePair->value);
-        expect($result['user_id'])->toEqual($strongestHandUserId);
-        expect($result['score'])->toEqual($score);
-        expect($result['cards'])->toBeArray();
-        expect($result['cards'])->toHaveCount($cardCount);
-        expect($result['private_cards_score'])->toBeInt();
-        expect($result['private_cards_score'])->toEqual(22);
+//        expect($result['hand'])->toEqual(Hands::OnePair->value);
+//        expect($result['user_id'])->toEqual($strongestHandUserId);
+//        expect($result['score'])->toEqual($score);
+//        expect($result['cards'])->toBeArray();
+//        expect($result['cards'])->toHaveCount($cardCount);
+//        expect($result['private_cards_score'])->toBeInt();
+//        expect($result['private_cards_score'])->toEqual(22);
+
+        expect($result->strongestHand->hand)->toEqual(Hands::OnePair);
+        expect($result->userId)->toEqual($strongestHandUserId);
+        expect($result->handScore)->toEqual($score);
+        expect($result->strongestHand->cards)->toBeArray();
+        expect($result->strongestHand->cards)->toHaveCount($cardCount);
+        expect($result->privateCardsScore)->toBeInt();
+        expect($result->privateCardsScore)->toEqual(22);
     })->group('game-domain');;
 
 
@@ -141,8 +149,8 @@ describe('hand comparator between players tests ', function () {
             $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
 
             expect($calculatedStrongestHand)->not->toBeNull();
-            expect($calculatedStrongestHand['hand'])->toEqual(Hands::TwoPair->value);
-            expect($calculatedStrongestHand['user_id'])->toEqual($secondUser->id);
+            expect($calculatedStrongestHand->strongestHand->hand)->toEqual(Hands::TwoPair);
+            expect($calculatedStrongestHand->userId)->toEqual($secondUser->id);
         });
 
     })->group('two-pair');
@@ -192,9 +200,12 @@ describe('hand comparator between players tests ', function () {
             $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
 
             expect($calculatedStrongestHand)->not->toBeNull();
-            expect($calculatedStrongestHand['hand'])->toEqual(Hands::ThreeOfAKind->value);
-            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
-            expect($calculatedStrongestHand['score'])->toEqual(14 * 3);
+//            expect($calculatedStrongestHand['hand'])->toEqual(Hands::ThreeOfAKind->value);
+//            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+//            expect($calculatedStrongestHand['score'])->toEqual(14 * 3);
+            expect($calculatedStrongestHand->strongestHand->hand)->toEqual(Hands::ThreeOfAKind);
+            expect($calculatedStrongestHand->userId)->toEqual($firstUser->id);
+            expect($calculatedStrongestHand->handScore)->toEqual(14 * 3);
 
             $firstRoundPlayer->update([
                 'user_info' => [
@@ -207,9 +218,12 @@ describe('hand comparator between players tests ', function () {
             $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
 
             expect($calculatedStrongestHand)->not->toBeNull();
-            expect($calculatedStrongestHand['hand'])->toEqual(Hands::ThreeOfAKind->value);
-            expect($calculatedStrongestHand['user_id'])->toEqual($secondUser->id);
-            expect($calculatedStrongestHand['score'])->toEqual(13 * 3);
+//            expect($calculatedStrongestHand['hand'])->toEqual(Hands::ThreeOfAKind->value);
+//            expect($calculatedStrongestHand['user_id'])->toEqual($secondUser->id);
+//            expect($calculatedStrongestHand['score'])->toEqual(13 * 3);
+            expect($calculatedStrongestHand->strongestHand->hand)->toEqual(Hands::ThreeOfAKind);
+            expect($calculatedStrongestHand->userId)->toEqual($secondUser->id);
+            expect($calculatedStrongestHand->handScore)->toEqual(13 * 3);
         });
     })->group('three-of-a-kind');
 
@@ -261,9 +275,12 @@ describe('hand comparator between players tests ', function () {
             $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
 
             expect($calculatedStrongestHand)->not->toBeNull();
-            expect($calculatedStrongestHand['hand'])->toEqual(Hands::FourOfAKind->value);
-            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
-            expect($calculatedStrongestHand['score'])->toEqual(14 * 4);
+//            expect($calculatedStrongestHand['hand'])->toEqual(Hands::FourOfAKind->value);
+//            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+//            expect($calculatedStrongestHand['score'])->toEqual(14 * 4);
+            expect($calculatedStrongestHand->strongestHand->hand)->toEqual(Hands::FourOfAKind);
+            expect($calculatedStrongestHand->userId)->toEqual($firstUser->id);
+            expect($calculatedStrongestHand->handScore)->toEqual(14 * 4);
 
             $room->update([
                 'data' => [
@@ -291,9 +308,13 @@ describe('hand comparator between players tests ', function () {
             $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
 //        dd($calculatedStrongestHand,'aqui');
             expect($calculatedStrongestHand)->not->toBeNull();
-            expect($calculatedStrongestHand['hand'])->toEqual(Hands::FourOfAKind->value);
-            expect($calculatedStrongestHand['user_id'])->toEqual($secondUser->id);
-            expect($calculatedStrongestHand['score'])->toEqual(13 * 4);
+//            expect($calculatedStrongestHand['hand'])->toEqual(Hands::FourOfAKind->value);
+//            expect($calculatedStrongestHand['user_id'])->toEqual($secondUser->id);
+//            expect($calculatedStrongestHand['score'])->toEqual(13 * 4);
+
+            expect($calculatedStrongestHand->strongestHand->hand)->toEqual(Hands::FourOfAKind);
+            expect($calculatedStrongestHand->userId)->toEqual($secondUser->id);
+            expect($calculatedStrongestHand->handScore)->toEqual(13 * 4);
         });
     })->group('four-of-a-kind');
 
@@ -342,9 +363,12 @@ describe('hand comparator between players tests ', function () {
             $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
 
             expect($calculatedStrongestHand)->not->toBeNull();
-            expect($calculatedStrongestHand['hand'])->toEqual(Hands::FullHouse->value);
-            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
-            expect($calculatedStrongestHand['score'])->toEqual((3 * 13) + (2 * 14));
+//            expect($calculatedStrongestHand['hand'])->toEqual(Hands::FullHouse->value);
+//            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+//            expect($calculatedStrongestHand['score'])->toEqual((3 * 13) + (2 * 14));
+            expect($calculatedStrongestHand->strongestHand->hand)->toEqual(Hands::FullHouse);
+            expect($calculatedStrongestHand->userId)->toEqual($firstUser->id);
+            expect($calculatedStrongestHand->handScore)->toEqual((3 * 13) + (2 * 14));
 
 
             $firstRoundPlayer->update([
@@ -360,9 +384,13 @@ describe('hand comparator between players tests ', function () {
             $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
 
             expect($calculatedStrongestHand)->not->toBeNull();
-            expect($calculatedStrongestHand['hand'])->toEqual(Hands::FullHouse->value);
-            expect($calculatedStrongestHand['user_id'])->toEqual($secondUser->id);
-            expect($calculatedStrongestHand['score'])->toEqual((3 * 13) + (2 * 12));
+//            expect($calculatedStrongestHand['hand'])->toEqual(Hands::FullHouse->value);
+//            expect($calculatedStrongestHand['user_id'])->toEqual($secondUser->id);
+//            expect($calculatedStrongestHand['score'])->toEqual((3 * 13) + (2 * 12));
+
+            expect($calculatedStrongestHand->strongestHand->hand)->toEqual(Hands::FullHouse);
+            expect($calculatedStrongestHand->userId)->toEqual($secondUser->id);
+            expect($calculatedStrongestHand->handScore)->toEqual((3 * 13) + (2 * 12));
         });
     })->group('full-house');
 
@@ -411,10 +439,12 @@ describe('hand comparator between players tests ', function () {
             $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
 
             expect($calculatedStrongestHand)->not->toBeNull();
-            expect($calculatedStrongestHand['hand'])->toEqual(Hands::Flush->value);
-            expect($calculatedStrongestHand['user_id'])->toEqual($secondUser->id);
-            expect($calculatedStrongestHand['score'])->toEqual(14 + 2 + 4 + 5 + 10);
-
+//            expect($calculatedStrongestHand['hand'])->toEqual(Hands::Flush->value);
+//            expect($calculatedStrongestHand['user_id'])->toEqual($secondUser->id);
+//            expect($calculatedStrongestHand['score'])->toEqual(14 + 2 + 4 + 5 + 10);
+            expect($calculatedStrongestHand->strongestHand->hand)->toEqual(Hands::Flush);
+            expect($calculatedStrongestHand->userId)->toEqual($secondUser->id);
+            expect($calculatedStrongestHand->handScore)->toEqual(14 + 2 + 4 + 5 + 10);
 
             $firstRoundPlayer->update([
                 'user_info' =>
@@ -429,9 +459,13 @@ describe('hand comparator between players tests ', function () {
             $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
 
             expect($calculatedStrongestHand)->not->toBeNull();
-            expect($calculatedStrongestHand['hand'])->toEqual(Hands::Flush->value);
-            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
-            expect($calculatedStrongestHand['score'])->toEqual(4 + 5 + 10 + 8 + 11);
+//            expect($calculatedStrongestHand['hand'])->toEqual(Hands::Flush->value);
+//            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+//            expect($calculatedStrongestHand['score'])->toEqual(4 + 5 + 10 + 8 + 11);
+
+            expect($calculatedStrongestHand->strongestHand->hand)->toEqual(Hands::Flush);
+            expect($calculatedStrongestHand->userId)->toEqual($firstUser->id);
+            expect($calculatedStrongestHand->handScore)->toEqual(4 + 5 + 10 + 8 + 11);
         });
     })->group('flush');
 
@@ -481,10 +515,12 @@ describe('hand comparator between players tests ', function () {
             $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
 
             expect($calculatedStrongestHand)->not->toBeNull();
-            expect($calculatedStrongestHand['hand'])->toEqual(Hands::Straight->value);
-            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
-            expect($calculatedStrongestHand['score'])->toEqual(3 + 7 + 4 + 5 + 6);
-
+//            expect($calculatedStrongestHand['hand'])->toEqual(Hands::Straight->value);
+//            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+//            expect($calculatedStrongestHand['score'])->toEqual(3 + 7 + 4 + 5 + 6);
+            expect($calculatedStrongestHand->strongestHand->hand)->toEqual(Hands::Straight);
+            expect($calculatedStrongestHand->userId)->toEqual($firstUser->id);
+            expect($calculatedStrongestHand->handScore)->toEqual(3 + 7 + 4 + 5 + 6);
 
             $firstRoundPlayer->update([
                 'user_info' =>
@@ -499,9 +535,13 @@ describe('hand comparator between players tests ', function () {
             $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
 
             expect($calculatedStrongestHand)->not->toBeNull();
-            expect($calculatedStrongestHand['hand'])->toEqual(Hands::Straight->value);
-            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
-            expect($calculatedStrongestHand['score'])->toEqual(4 + 5 + 6 + 8 + 7);
+//            expect($calculatedStrongestHand['hand'])->toEqual(Hands::Straight->value);
+//            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+//            expect($calculatedStrongestHand['score'])->toEqual(4 + 5 + 6 + 8 + 7);
+
+            expect($calculatedStrongestHand->strongestHand->hand)->toEqual(Hands::Straight);
+            expect($calculatedStrongestHand->userId)->toEqual($firstUser->id);
+            expect($calculatedStrongestHand->handScore)->toEqual(4 + 5 + 6 + 8 + 7);
         });
     })->group('straight');
 
@@ -550,10 +590,9 @@ describe('hand comparator between players tests ', function () {
             $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
 
             expect($calculatedStrongestHand)->not->toBeNull();
-            expect($calculatedStrongestHand['hand'])->toEqual(Hands::StraightFlush->value);
-            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
-            expect($calculatedStrongestHand['score'])->toEqual(3 + 7 + 4 + 5 + 6);
-
+            expect($calculatedStrongestHand->strongestHand->hand)->toEqual(Hands::StraightFlush);
+            expect($calculatedStrongestHand->userId)->toEqual($firstUser->id);
+            expect($calculatedStrongestHand->handScore)->toEqual(3 + 7 + 4 + 5 + 6);
 
             $firstRoundPlayer->update([
                 'user_info' =>
@@ -568,9 +607,9 @@ describe('hand comparator between players tests ', function () {
             $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
 
             expect($calculatedStrongestHand)->not->toBeNull();
-            expect($calculatedStrongestHand['hand'])->toEqual(Hands::StraightFlush->value);
-            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
-            expect($calculatedStrongestHand['score'])->toEqual(4 + 5 + 6 + 8 + 7);
+            expect($calculatedStrongestHand->strongestHand->hand)->toEqual(Hands::StraightFlush);
+            expect($calculatedStrongestHand->userId)->toEqual($firstUser->id);
+            expect($calculatedStrongestHand->handScore)->toEqual(4 + 5 + 6 + 8 + 7);
         });
     })->group('straight-flush');
 
@@ -626,8 +665,10 @@ describe('hand comparator between players tests ', function () {
             $calculatedStrongestHand = app(HandComparator::class)->execute($roomRound);
 
             expect($calculatedStrongestHand)->not->toBeNull();
-            expect($calculatedStrongestHand['hand'])->toEqual(Hands::FullHouse->value);
-            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
+            expect($calculatedStrongestHand->strongestHand->hand)->toEqual(Hands::FullHouse);
+            expect($calculatedStrongestHand->userId)->toEqual($firstUser->id);
+//            expect($calculatedStrongestHand['hand'])->toEqual(Hands::FullHouse->value);
+//            expect($calculatedStrongestHand['user_id'])->toEqual($firstUser->id);
         });
     })->group('kicker-hand');
 })->group('game-domain');

@@ -14,7 +14,7 @@ class HandCalculator
     {
         $handEvaluator = app(HandEvaluatorInterface::class, ['cards' => $cards]);
         $hand = $handEvaluator->execute();
-        return ['hand' => $hand?->hand?->value, 'cards' => $this->mapCards($hand->cards)];
+        return ['hand' => $hand?->hand?->value, 'cards' => $hand->cards];
     }
 
     private function mapCards($cards): array

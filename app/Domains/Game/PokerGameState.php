@@ -2,6 +2,8 @@
 
 namespace App\Domains\Game;
 
+use App\Domains\Game\Cards\Card;
+use App\Domains\Game\Cards\Traits\TransformsCardsToObjects;
 use App\Domains\Game\Rules\GetHand;
 use App\Domains\Game\Rules\GetPlayerPossibleActions;
 use App\Models\Room;
@@ -11,6 +13,7 @@ use Illuminate\Support\Arr;
 
 class PokerGameState implements LoadGameStateInterface
 {
+    use TransformsCardsToObjects;
     private ?array $player;
 
     private ?array $players;
@@ -145,19 +148,22 @@ class PokerGameState implements LoadGameStateInterface
         return $this->remnantPlayers;
     }
 
+    /**
+     * @return Card[]|null
+     */
     public function getFlop(): ?array
     {
-        return $this->flop;
+        return $this->transform($this->flop);
     }
 
     public function getTurn(): ?array
     {
-        return $this->turn;
+        return $this->transform($this->turn);
     }
 
     public function getRiver(): ?array
     {
-        return $this->river;
+        return $this->transform($this->river);
     }
 
     public function getPlayerHand(): ?array
@@ -172,7 +178,7 @@ class PokerGameState implements LoadGameStateInterface
 
     public function getPlayerCards(): ?array
     {
-        return $this->playerCards ?? [];
+        return $this->transform($this->playerCards) ?? [];
     }
 
     public function getPlayer(): ?array

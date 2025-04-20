@@ -3,7 +3,7 @@
 namespace App\Domains\Game\Cards\Hands\Evaluators\Interfaces;
 
 
-use App\Domains\Game\Cards\Hands\Hand;
+use App\Domains\Game\Cards\Hands\ValueObjects\Hand;
 
 interface HandEvaluatorInterface
 {

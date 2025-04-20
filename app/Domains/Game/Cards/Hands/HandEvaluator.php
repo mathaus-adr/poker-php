@@ -4,6 +4,7 @@ namespace App\Domains\Game\Cards\Hands;
 
 use App\Domains\Game\Cards\Card;
 use App\Domains\Game\Cards\Hands\Evaluators\Interfaces\HandEvaluatorInterface;
+use App\Domains\Game\Cards\Hands\ValueObjects\Hand;
 
 class HandEvaluator implements HandEvaluatorInterface
 {
@@ -29,7 +30,6 @@ class HandEvaluator implements HandEvaluatorInterface
                 return $a->carta <= $b->carta;
             });
         }
-
 
         foreach ($handEvaluators as $evaluator) {
             $this->handEvaluators[] = app($evaluator, ['cards' => $this->cards]);
