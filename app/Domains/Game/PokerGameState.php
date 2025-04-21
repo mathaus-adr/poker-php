@@ -68,7 +68,7 @@ class PokerGameState implements LoadGameStateInterface
         $this->roundActions = $round?->actions?->toArray();
         $this->gameStarted = !is_null($round);
         $this->remnantPlayers = $this->orderRemnantPlayers();
-        $this->lastPlayerFolded = $roomData['last_player_folded'] ?? null;
+//        $this->lastPlayerFolded = $roomData['last_player_folded'] ?? null;
 
         if ($this->gameStarted) {
             $this->playerCards = $this->getPlayerPrivateCards();

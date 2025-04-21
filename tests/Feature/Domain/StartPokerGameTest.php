@@ -12,7 +12,6 @@ use App\Models\RoundPlayer;
 use App\Models\User;
 use Illuminate\Support\Facades\Bus;
 
-//uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 describe('start poker game tests', function () {
     test('if can start poker game with correct rules', function () {
         Bus::fake();

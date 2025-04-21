@@ -65,19 +65,16 @@ beforeEach(function () {
 
     expect($pokerGameState->getGameStarted())->toBeTrue();
 
-    // Verificar se os jogadores foram carregados corretamente
     expect($pokerGameState->getPlayers())->not->toBeNull();
     expect($pokerGameState->getPlayers())->toHaveCount(4);
 
-    // Verificar se o jogador atual foi carregado corretamente
+
     expect($pokerGameState->getPlayer())->not->toBeNull();
     expect($pokerGameState->getPlayer()['user_id'])->toEqual($roomOwnerUser->id);
 
-    // Verificar se o pote total foi carregado corretamente
     expect($pokerGameState->getTotalPot())->not->toBeNull();
     expect($pokerGameState->getTotalPot())->toEqual(15);
 
-    // Verificar se o último jogador que desistiu foi carregado corretamente
     expect($pokerGameState->getLastPlayerFolded())->toBeNull();
 });
 
