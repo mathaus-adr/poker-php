@@ -20,9 +20,6 @@ return new class extends Migration {
             $table->integer('total_players_in_round')->nullable();
             $table->unsignedBigInteger('total_pot')->nullable();
             $table->unsignedBigInteger('current_bet_amount_to_join')->nullable();
-            $table->foreignIdFor(User::class, 'last_player_folded_id')->nullable();
-            $table->foreignIdFor(User::class, 'last_player_raised_id')->nullable();
-            $table->foreignIdFor(User::class, 'last_player_checked_id')->nullable();
             $table->foreignIdFor(User::class, 'winner_id')->nullable();
             $table->enum('phase', ['pre_flop', 'flop', 'turn', 'river', 'end'])->nullable();
             $table->timestamps();
