@@ -11,7 +11,7 @@ use App\Models\RoundPlayer;
 use App\Models\User;
 use Illuminate\Support\Arr;
 
-class PokerGameState implements LoadGameStateInterface
+class PokerGameState
 {
     use TransformsCardsToObjects;
     private ?array $player;
