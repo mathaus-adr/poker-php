@@ -90,7 +90,7 @@ describe('hand comparator between players tests ', function () {
         expect($result->strongestHand->cards)->toHaveCount($cardCount);
         expect($result->privateCardsScore)->toBeInt();
         expect($result->privateCardsScore)->toEqual(22);
-    })->group('game-domain');;
+    })->group('game-domain');
 
 
     it('should declare strongest two pair', function () {

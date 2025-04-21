@@ -85,5 +85,5 @@ abstract class GameActionCommand
         );
     }
 
-    public abstract function process(): void;
+    abstract public function process(): void;
 }

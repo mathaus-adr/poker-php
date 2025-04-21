@@ -30,7 +30,7 @@ describe('card ranking', function () {
 
         expect($hand['hand'])->toEqual(Hands::RoyalFlush->value);
         expect($hand['cards'])->toContainEqual($cards[0], $cards[1], $cards[2], $cards[3], $cards[4]);
-    })->group('card-ranking', 'royal-flush');;
+    })->group('card-ranking', 'royal-flush');
 
     it('test card ranking straight flush', function () {
 
@@ -48,7 +48,7 @@ describe('card ranking', function () {
 
         expect($hand['hand'])->toEqual(Hands::StraightFlush->value);
         expect($hand['cards'])->toContainEqual($cards[0], $cards[1], $cards[2], $cards[3], $cards[4]);
-    })->group('card-ranking', 'straight-flush');;
+    })->group('card-ranking', 'straight-flush');
 
 
     it('test card ranking four of a kind', function () {
@@ -66,7 +66,7 @@ describe('card ranking', function () {
         $cards = transformCards([$cards[0], $cards[1], $cards[2], $cards[3]]);
         expect($hand['hand'])->toEqual(Hands::FourOfAKind->value);
         expect($hand['cards'])->toContainEqual($cards[0], $cards[1], $cards[2], $cards[3]);
-    })->group('card-ranking', 'four-of-a-kind');;
+    })->group('card-ranking', 'four-of-a-kind');
 
     it('test card ranking full house', function () {
         $cards = [
@@ -82,7 +82,7 @@ describe('card ranking', function () {
         $cards = transformCards($cards);
         expect($hand['hand'])->toEqual(Hands::FullHouse->value);
         expect($hand['cards'])->toContainEqual($cards[0], $cards[1], $cards[2], $cards[3], $cards[4]);
-    })->group('card-ranking', 'full-house');;
+    })->group('card-ranking', 'full-house');
 
     it('test card ranking flush', closure: function () {
         $cards = [
@@ -99,7 +99,7 @@ describe('card ranking', function () {
         $cards = transformCards($cards);
         expect($hand['hand'])->toEqual(Hands::Flush->value);
         expect($hand['cards'])->toContainEqual($cards[0], $cards[1], $cards[2], $cards[3], $cards[4]);
-    })->group('card-ranking', 'flush');;
+    })->group('card-ranking', 'flush');
 
     it('test card ranking straight', function () {
         $cards = [
@@ -116,7 +116,7 @@ describe('card ranking', function () {
         expect($hand['hand'])->toEqual(Hands::Straight->value);
         expect($hand['cards'])->toContainEqual($cards[0], $cards[1], $cards[2], $cards[3], $cards[4]);
 
-    })->group('card-ranking', 'straight');;
+    })->group('card-ranking', 'straight');
 
     it('test card ranking three of a kind', function () {
         $cards = [
@@ -132,7 +132,7 @@ describe('card ranking', function () {
         $cards = transformCards([$cards[0],$cards[1], $cards[2]]);
         expect($hand['hand'])->toEqual(Hands::ThreeOfAKind->value);
         expect($hand['cards'])->toContainEqual($cards[0], $cards[1], $cards[2]);
-    })->group('card-ranking', 'three-of-a-kind');;
+    })->group('card-ranking', 'three-of-a-kind');
 
     it('test card ranking two pair', function () {
         $cards = [
@@ -148,7 +148,7 @@ describe('card ranking', function () {
         $cards = transformCards([$cards[3],$cards[1], $cards[2], $cards[0]]);
         expect($hand['hand'])->toEqual(Hands::TwoPair->value);
         expect($hand['cards'])->toContainEqual($cards[0], $cards[1], $cards[2], $cards[3]);
-    })->group('card-ranking', 'two-pair');;
+    })->group('card-ranking', 'two-pair');
 
     it('test card ranking one pair', function () {
         $cards = [
@@ -164,7 +164,7 @@ describe('card ranking', function () {
         $cards = transformCards([$cards[1], $cards[0]]);
         expect($hand['hand'])->toEqual(Hands::OnePair->value);
         expect($hand['cards'])->toEqual($cards);
-    })->group('card-ranking', 'one-pair');;
+    })->group('card-ranking', 'one-pair');
 
     it('test card ranking high card', function () {
         $cards = [
@@ -179,7 +179,7 @@ describe('card ranking', function () {
         $hand = $handCalculator->calculateBestHand($cards);
         $cards = transformCards([$cards[4]]);
         expect($hand)->toEqual(['hand' => Hands::HighCard->value, 'cards' => $cards]);
-    })->group('card-ranking', 'high-card');;
+    })->group('card-ranking', 'high-card');
 
     it('test card ranking high card with ace', function () {
         $cards = [
