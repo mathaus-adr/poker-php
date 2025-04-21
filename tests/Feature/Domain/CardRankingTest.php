@@ -27,7 +27,6 @@ describe('card ranking', function () {
         $handCalculator = new HandCalculator();
         $hand = $handCalculator->calculateBestHand($cards);
         $cards = transformCards($cards);
-//        expect($hand)->toEqual(['hand' => Hands::RoyalFlush->value, 'cards' => $cards]);
 
         expect($hand['hand'])->toEqual(Hands::RoyalFlush->value);
         expect($hand['cards'])->toContainEqual($cards[0], $cards[1], $cards[2], $cards[3], $cards[4]);
@@ -47,8 +46,6 @@ describe('card ranking', function () {
         $hand = $handCalculator->calculateBestHand($cards);
         $cards = transformCards($cards);
 
-//        expect($hand['hand'])->toEqual(Hands::StraightFlush->value);
-//        expect($hand['cards'])->toContainEqual($cards[0], $cards[1], $cards[2], $cards[3]);
         expect($hand['hand'])->toEqual(Hands::StraightFlush->value);
         expect($hand['cards'])->toContainEqual($cards[0], $cards[1], $cards[2], $cards[3], $cards[4]);
     })->group('card-ranking', 'straight-flush');;
@@ -66,9 +63,7 @@ describe('card ranking', function () {
         $handCalculator = new HandCalculator();
         $hand = $handCalculator->calculateBestHand($cards);
 
-            $cards = transformCards([$cards[0], $cards[1], $cards[2], $cards[3]]);
-//        expect($hand['hand'])->toEqual(Hands::FourOfAKind->value);
-//        expect($hand['cards'])->toContainEqual(31, 41, 11, 21);
+        $cards = transformCards([$cards[0], $cards[1], $cards[2], $cards[3]]);
         expect($hand['hand'])->toEqual(Hands::FourOfAKind->value);
         expect($hand['cards'])->toContainEqual($cards[0], $cards[1], $cards[2], $cards[3]);
     })->group('card-ranking', 'four-of-a-kind');;
@@ -85,8 +80,6 @@ describe('card ranking', function () {
         $handCalculator = new HandCalculator();
         $hand = $handCalculator->calculateBestHand($cards);
         $cards = transformCards($cards);
-//        expect($hand['hand'])->toEqual(Hands::FullHouse->value);
-//        expect($hand['cards'])->toContainEqual(31, 41, 11, 313, 413);
         expect($hand['hand'])->toEqual(Hands::FullHouse->value);
         expect($hand['cards'])->toContainEqual($cards[0], $cards[1], $cards[2], $cards[3], $cards[4]);
     })->group('card-ranking', 'full-house');;
@@ -102,8 +95,7 @@ describe('card ranking', function () {
 
         $handCalculator = new HandCalculator();
         $hand = $handCalculator->calculateBestHand($cards);
-//        expect($hand['hand'])->toEqual(Hands::Flush->value);
-//        expect($hand['cards'])->toContainEqual(32, 34, 37, 39, 311);
+
         $cards = transformCards($cards);
         expect($hand['hand'])->toEqual(Hands::Flush->value);
         expect($hand['cards'])->toContainEqual($cards[0], $cards[1], $cards[2], $cards[3], $cards[4]);
@@ -117,13 +109,10 @@ describe('card ranking', function () {
             ['naipe' => Suit::Spades->value, 'carta' => Card::Five->value],
             ['naipe' => Suit::Diamonds->value, 'carta' => Card::Six->value],
         ];
-//        usort($cards, function ($a, $b) {
-//            return $a['carta'] <= $b['carta'];
-//        });
+
         $handCalculator = new HandCalculator();
         $hand = $handCalculator->calculateBestHand($cards);
         $cards = transformCards($cards);
-//        expect($hand)->toEqual(['hand' => Hands::Straight->value, 'cards' => [46,25,14, 43,32]]);
         expect($hand['hand'])->toEqual(Hands::Straight->value);
         expect($hand['cards'])->toContainEqual($cards[0], $cards[1], $cards[2], $cards[3], $cards[4]);
 

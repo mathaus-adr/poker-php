@@ -16,11 +16,4 @@ class HandCalculator
         $hand = $handEvaluator->execute();
         return ['hand' => $hand?->hand?->value, 'cards' => $hand->cards];
     }
-
-    private function mapCards($cards): array
-    {
-        return collect($cards)->map(function ($card) {
-            return $card->naipe . $card->carta;
-        })->toArray();
-    }
 }

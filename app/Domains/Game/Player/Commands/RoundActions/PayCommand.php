@@ -13,13 +13,6 @@ use Illuminate\Support\Facades\DB;
 
 class PayCommand extends GameActionCommand
 {
-    public function __construct(
-        User $user,
-        Room $room
-    ) {
-        parent::__construct($user, $room);
-    }
-
     public function process(): void
     {
         $currentBetAmountToJoin = $this->round->current_bet_amount_to_join;
