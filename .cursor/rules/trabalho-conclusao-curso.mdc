@@ -1,0 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+1. Todo e qualquer teste automatizado deve ser executado com o comando "sail artisan test --group=game-domain"
+2. Todo e qualquer teste automatizado que for criado deve ser criado dentro do grupo definido como game-domain.
+3. Avalie o código de maneira crítica, apontando duplicações, melhoras de segurança, manutenibilidade e confiabilidade.
+4. Refatore o código avaliado pelo passo 1, removendo as duplicações e executando as melhoras propostas. Após finalizar cada etapa rode os testes automatizados para validar as mudanças propostas e implementadas. 
+5. Avalia os padrões de projeto que podem ser implementados no contexto desse jogo.
+6. Refatore para que os padrões de projeto sugeridos no passo 3 sejam implementados.
+7. Execute os testes automatizados com o comando "sail artisan test --group=game-domain".
+8. Refatore o que for necessário no escopo de frontend da aplicação para implantar o que foi refatorado.
