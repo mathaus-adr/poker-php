@@ -1,0 +1,13 @@
+---
+description: 
+globs: app/Domains/**/*.php
+alwaysApply: false
+---
+- Para toda e qualquer alteração feita no código após a execução de um passo deve ser executada os testes automatizados através do comando "sail artisan test" e todos devem passar
+- Qualquer teste criado deve ser criando utilizando o framework Pest
+- A versão do PHP utilizada no projeto é a 8.3
+
+
+
+
+
