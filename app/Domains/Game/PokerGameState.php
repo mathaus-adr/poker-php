@@ -221,21 +221,12 @@ class PokerGameState implements LoadGameStateInterface
      */
     public function getAllPlayerCards(): ?array
     {
-        $cards = $this->getPlayerPrivateCards() ?? null;
-
-        if ($this->flop) {
-            $cards = array_merge($cards, $this->flop);
-        }
-
-        if ($this->turn) {
-            $cards = array_merge($cards, $this->turn);
-        }
-
-        if ($this->river) {
-            $cards = array_merge($cards, $this->river);
-        }
-
-        return $cards;
+        return \App\Domains\Game\Utils\CardDistributor::getPlayerFullHand(
+            $this->getPlayerPrivateCards() ?? [],
+            $this->flop,
+            $this->turn,
+            $this->river
+        );
     }
 
     public function isAllPlayersWithSameBet(): bool

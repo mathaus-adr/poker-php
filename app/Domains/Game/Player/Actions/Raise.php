@@ -2,93 +2,50 @@
 
 namespace App\Domains\Game\Player\Actions;
 
-use App\Domains\Game\PokerGameState;
-use App\Events\GameStatusUpdated;
 use App\Models\Room;
 use App\Models\RoomRound;
-use App\Models\RoomUser;
-use App\Models\RoundAction;
-use App\Models\RoundPlayer;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-class Raise
+class Raise extends BaseAction
 {
-    public function __construct(private PokerGameState $pokerGameState)
-    {
-    }
-
+    /**
+     * Executa a ação de aumento de aposta (raise)
+     *
+     * @param Room $room Sala onde o jogador está
+     * @param User $user Usuário que está realizando a ação
+     * @param int $raiseAmount Valor do aumento da aposta
+     * @return void
+     */
     public function raise(Room $room, User $user, int $raiseAmount): void
     {
+        // Carrega o estado do jogo
         $this->pokerGameState->load($room->id, $user);
 
-        if (!$this->pokerGameState->isPlayerTurn($user->id)) {
+        // Verifica se é a vez do jogador
+        if (!$this->isPlayerTurn($user->id)) {
             return;
         }
 
         $round = $room->round;
+        
+        // Obtém o jogador na rodada atual
         $roundPlayer = $this->getRoundPlayer($round, $user);
+        
+        // Calcula o valor total a ser pago
         $totalCashToPay = $raiseAmount;
 
-        $this->storeRoundAction($user, $round, $totalCashToPay);
+        // Atualiza o valor mínimo de aposta na rodada
+        $totalRoundBetFromPlayer = $this->getTotalBetFromPlayer($round, $user->id) + $totalCashToPay;
+        $round->update(['current_bet_amount_to_join' => $totalRoundBetFromPlayer]);
+
+        // Registra a ação de aumento
+        $this->storeRoundAction($user, $round, $totalCashToPay, 'raise');
+        
+        // Define o próximo jogador
         $this->setNextPlayerToPlay($round, $roundPlayer);
-        $this->subtractCashFromPlayer($room, $user, $totalCashToPay);
-    }
-
-
-    private function storeRoundAction(User $user, RoomRound $round, int $amount): void
-    {
-        $totalRoundBetFromPlayer = $round->actions->where('user_id', $user->id)->sum('amount') + $amount;
-
-        $round->update([
-            'total_pot' => DB::raw('total_pot + ' . $amount),
-            'current_bet_amount_to_join' => $totalRoundBetFromPlayer
-        ]);
-
-        RoundAction::create(
-            [
-                'room_round_id' => $round->id,
-                'user_id' => $user->id,
-                'amount' => $amount,
-                'action' => 'raise',
-                'round_phase' => $round->phase
-            ]
-        );
-    }
-
-    private function setNextPlayerToPlay(RoomRound $round, RoundPlayer $roundPlayer): void
-    {
-        $nextPlayerWithHighOrder = RoundPlayer::where('room_round_id', $round->id)
-            ->where('status', true)
-            ->where('order', '>', $roundPlayer->order)
-            ->first();
-
-        if ($nextPlayerWithHighOrder) {
-            $round->update(['player_turn_id' => $nextPlayerWithHighOrder->user_id]);
-            return;
-        }
-
-        $nextPlayerWithMinorOrder = RoundPlayer::where('room_round_id', $round->id)
-            ->where('status', true)->where('order', '>=', 1)->first();
-
-        if ($nextPlayerWithMinorOrder) {
-            $round->update(['player_turn_id' => $nextPlayerWithMinorOrder->user_id]);
-        }
-    }
-
-    private function getRoundPlayer(RoomRound $round, User $user): RoundPlayer
-    {
-        return RoundPlayer::where([
-            'room_round_id' => $round->id,
-            'user_id' => $user->id
-        ])->first();
-    }
-
-    private function subtractCashFromPlayer(Room $room, User $user, int $totalCashToPay): void
-    {
-        RoomUser::where([
-            'room_id' => $room->id,
-            'user_id' => $user->id
-        ])->update(['cash' => DB::raw('cash - ' . $totalCashToPay)]);
+        
+        // Subtrai o dinheiro do jogador
+        $this->subtractCashFromPlayer($room, $user->id, $totalCashToPay);
     }
 }

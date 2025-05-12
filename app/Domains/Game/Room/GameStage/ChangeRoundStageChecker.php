@@ -2,52 +2,52 @@
 
 namespace App\Domains\Game\Room\GameStage;
 
+use App\Domains\Game\Utils\RoundActionManager;
+use App\Domains\Game\Utils\RoundPlayerManager;
 use App\Models\RoomRound;
-use App\Models\RoundAction;
 use Illuminate\Support\Facades\DB;
 
 class ChangeRoundStageChecker
 {
+    /**
+     * Verifica se é possível mudar para a próxima fase da rodada
+     *
+     * @param RoomRound $round Rodada atual
+     * @return bool Retorna true se é possível mudar de fase
+     */
     public function execute(RoomRound $round): bool
     {
+        // Verifica se todos os jogadores ativos já jogaram nesta fase
+        $allPlayersPlayedInTheActualPhase = $this->haveAllPlayersPlayedInCurrentPhase($round);
+        
+        // Verifica se todos os jogadores têm a mesma aposta
+        $allPlayersBetAmountIsTheSame = RoundActionManager::allPlayersHaveSameBet($round);
+        return $allPlayersPlayedInTheActualPhase && $allPlayersBetAmountIsTheSame;
+    }
+    
+    /**
+     * Verifica se todos os jogadores ativos já jogaram na fase atual
+     *
+     * @param RoomRound $round Rodada atual
+     * @return bool
+     */
+    private function haveAllPlayersPlayedInCurrentPhase(RoomRound $round): bool
+    {
+        // Obtém os IDs dos jogadores que já jogaram nesta fase
         $playersThatPlayedInThisPhase = $round
             ->actions()
             ->select(['user_id'])
             ->distinct()
-            ->where('round_phase',
-                $round->phase
-            );
-        $roundPlayers = $round->roundPlayers()->where('status', true)->get();
-        $playersIds = $playersThatPlayedInThisPhase->pluck('user_id');
-        $roundPlayers = $roundPlayers->whereNotIn('user_id',
-            $playersIds
-        );
-
-        $allPlayersPlayedInTheActualPhase = $roundPlayers->count() === 0;
-
-        $totalBetByActivePlayerCollection = $round->actions()
-            ->select([
-                DB::raw('SUM(amount) AS total_amount'), 'user_id'
-            ])
-            ->whereIn('user_id', $playersIds)
-            ->orderBy('total_amount')
-            ->groupBy('user_id')->get();
-
-        $allPlayersBetAmountIsTheSame = true;
-        $totalBet = 0;
-
-        foreach ($totalBetByActivePlayerCollection as $totalBetByActivePlayer) {
-            if ($totalBet === 0) {
-                $totalBet = $totalBetByActivePlayer->total_amount;
-                continue;
-            }
-
-            if ($totalBet != $totalBetByActivePlayer->total_amount) {
-                $allPlayersBetAmountIsTheSame = false;
-                break;
-            }
-        }
-
-        return $allPlayersPlayedInTheActualPhase && $allPlayersBetAmountIsTheSame;
+            ->where('round_phase', $round->phase)
+            ->pluck('user_id');
+            
+        // Obtém todos os jogadores ativos na rodada
+        $activePlayers = RoundPlayerManager::getActivePlayers($round);
+        
+        // Verifica se há jogadores ativos que ainda não jogaram
+        $playersYetToPlay = $activePlayers->whereNotIn('user_id', $playersThatPlayedInThisPhase);
+        
+        // Se não houver jogadores pendentes, então todos já jogaram
+        return $playersYetToPlay->isEmpty();
     }
 }
