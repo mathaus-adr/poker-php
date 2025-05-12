@@ -601,7 +601,7 @@ describe('hand comparator between players tests ', function () {
                 ]
             ]);
 
-            RoundPlayer::factory()->create([
+            $firstRoundPlayer = RoundPlayer::factory()->create([
                 'room_round_id' => $roomRound->id,
                 'user_id' => $firstUser->id,
                 'status' => true,

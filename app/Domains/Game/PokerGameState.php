@@ -9,7 +9,7 @@ use App\Models\RoundPlayer;
 use App\Models\User;
 use Illuminate\Support\Arr;
 
-class PokerGameState
+class PokerGameState implements LoadGameStateInterface
 {
     private ?array $player;
 

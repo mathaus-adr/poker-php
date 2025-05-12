@@ -10,6 +10,10 @@ use Exception;
 
 readonly class CreateRoom
 {
+    public function __construct()
+    {
+    }
+
     /**
      * @throws Exception
      */

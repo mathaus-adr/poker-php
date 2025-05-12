@@ -18,7 +18,7 @@ readonly class StartPokerGame
     {
     }
 
-    public function execute(Room $room): void
+    public function execute(Room $room)
     {
         $currentRoom = $room->data;
         $gameCards = Cards::getCards();
@@ -92,8 +92,8 @@ readonly class StartPokerGame
             'folded_players' => null
         ];
 
-        $this->subtractAmountFromUserCash($room, $currentRoom['big_blind']['user_id'], $currentRoom['config']['big_blind_amount']);
-        $this->subtractAmountFromUserCash($room, $currentRoom['small_blind']['user_id'], $currentRoom['config']['small_blind_amount']);
+        $this->subtractAmountFromUserCash($room, $currentRoom['big_blind']['user_id'], $currentRoom['config']['big_blind_amount']);;
+        $this->subtractAmountFromUserCash($room, $currentRoom['small_blind']['user_id'], $currentRoom['config']['small_blind_amount']);;
 
         $roundData = [
             'dealer_id' => $currentRoom['dealer']['user_id'],

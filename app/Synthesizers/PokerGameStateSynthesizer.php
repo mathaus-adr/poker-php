@@ -9,7 +9,7 @@ class PokerGameStateSynthesizer extends Synth
 {
     public static string $key = 'poker-game-state';
 
-    public static function match($target): bool
+    static function match($target)
     {
         return $target instanceof PokerGameState;
     }

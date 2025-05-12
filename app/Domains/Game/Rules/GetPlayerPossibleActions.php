@@ -35,6 +35,7 @@ class GetPlayerPossibleActions
             $actions[] = 'check';
             $actions[] = 'aumentar';
             $actions[] = 'allin';
+            return $actions;
         }
 
         return $actions;
