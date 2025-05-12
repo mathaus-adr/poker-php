@@ -65,16 +65,19 @@ beforeEach(function () {
 
     expect($pokerGameState->getGameStarted())->toBeTrue();
 
+    // Verificar se os jogadores foram carregados corretamente
     expect($pokerGameState->getPlayers())->not->toBeNull();
     expect($pokerGameState->getPlayers())->toHaveCount(4);
 
-
+    // Verificar se o jogador atual foi carregado corretamente
     expect($pokerGameState->getPlayer())->not->toBeNull();
     expect($pokerGameState->getPlayer()['user_id'])->toEqual($roomOwnerUser->id);
 
+    // Verificar se o pote total foi carregado corretamente
     expect($pokerGameState->getTotalPot())->not->toBeNull();
     expect($pokerGameState->getTotalPot())->toEqual(15);
 
+    // Verificar se o último jogador que desistiu foi carregado corretamente
     expect($pokerGameState->getLastPlayerFolded())->toBeNull();
 });
 
@@ -82,7 +85,7 @@ describe('game stage changer test', function () {
     it('cannot change game phase when round starts', function () {
         $changeRoundStage = app(ChangeRoundStageChecker::class);
         expect($changeRoundStage->execute(RoomRound::first()))->toBeFalse();
-    })->group('game-domain');
+    })->group('game-domain');;
 
     it('should can change game phase after everyone played in round when everyone has same value on bets', function () {
         Event::fake([GameStatusUpdated::class]);
@@ -120,7 +123,7 @@ describe('game stage changer test', function () {
         ]);
         $room = Room::find($round->room_id);
         expect($room->data['flop'])->not->toBeNull();
-    })->group('game-domain');
+    })->group('game-domain');;
 
     it('should cannot change game phase after last player to bet raise amount to bet', function () {
         Event::fake([GameStatusUpdated::class]);
@@ -161,7 +164,7 @@ describe('game stage changer test', function () {
         ]);
         $room->refresh();
         $this->assertArrayNotHasKey('flop', $room->data);
-    })->group('game-domain');
+    })->group('game-domain');;
 
     it('should can change game phase after last player folds when everyone has same value on bets', function () {
         Event::fake([GameStatusUpdated::class]);
@@ -200,7 +203,7 @@ describe('game stage changer test', function () {
 
         $room = Room::find($round->room_id);
         expect($room->data['flop'])->not->toBeNull();
-    })->group('game-domain');
+    })->group('game-domain');;
 
 
     it('should can change game phase after everyone played in round when everyone has same value on bets in all phases',

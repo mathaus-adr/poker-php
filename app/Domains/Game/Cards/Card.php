@@ -12,12 +12,4 @@ readonly class Card
         public string $naipe
     ) {
     }
-
-    public static function fromArray(array $card): self
-    {
-        return new self(
-            $card['carta'],
-            $card['naipe']
-        );
-    }
 }

@@ -2,8 +2,6 @@
 
 namespace App\Domains\Game;
 
-use App\Domains\Game\Cards\Card;
-use App\Domains\Game\Cards\Traits\TransformsCardsToObjects;
 use App\Domains\Game\Rules\GetHand;
 use App\Domains\Game\Rules\GetPlayerPossibleActions;
 use App\Models\Room;
@@ -13,7 +11,6 @@ use Illuminate\Support\Arr;
 
 class PokerGameState
 {
-    use TransformsCardsToObjects;
     private ?array $player;
 
     private ?array $players;
@@ -68,6 +65,7 @@ class PokerGameState
         $this->roundActions = $round?->actions?->toArray();
         $this->gameStarted = !is_null($round);
         $this->remnantPlayers = $this->orderRemnantPlayers();
+        $this->lastPlayerFolded = $roomData['last_player_folded'] ?? null;
 
         if ($this->gameStarted) {
             $this->playerCards = $this->getPlayerPrivateCards();
@@ -147,22 +145,19 @@ class PokerGameState
         return $this->remnantPlayers;
     }
 
-    /**
-     * @return Card[]|null
-     */
     public function getFlop(): ?array
     {
-        return $this->transform($this->flop);
+        return $this->flop;
     }
 
     public function getTurn(): ?array
     {
-        return $this->transform($this->turn);
+        return $this->turn;
     }
 
     public function getRiver(): ?array
     {
-        return $this->transform($this->river);
+        return $this->river;
     }
 
     public function getPlayerHand(): ?array
@@ -177,7 +172,7 @@ class PokerGameState
 
     public function getPlayerCards(): ?array
     {
-        return $this->transform($this->playerCards) ?? [];
+        return $this->playerCards ?? [];
     }
 
     public function getPlayer(): ?array
@@ -241,6 +236,22 @@ class PokerGameState
         }
 
         return $cards;
+    }
+
+    public function isAllPlayersWithSameBet(): bool
+    {
+        $actionsCollection = collect($this->roundActions);
+        $actionsGroupedByIdCollection = $actionsCollection->groupBy('user_id');
+        $firstPlayerTotalBet = $actionsGroupedByIdCollection->shift()->sum('amount');
+        $allPlayersWithSameBet = true;
+        $actionsGroupedByIdCollection->each(function ($playerActions) use ($firstPlayerTotalBet, &$allPlayersWithSameBet) {
+            $playerTotalBet = $playerActions->sum('amount');
+            if ($playerTotalBet !== $firstPlayerTotalBet) {
+                $allPlayersWithSameBet = false;
+            }
+        });
+
+        return $allPlayersWithSameBet;
     }
 
     public function isShowDown(): bool
