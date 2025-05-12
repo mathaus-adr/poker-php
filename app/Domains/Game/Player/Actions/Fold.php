@@ -15,22 +15,27 @@ class Fold extends BaseAction
      *
      * @param Room $room Sala onde o jogador está
      * @param User $user Usuário que está realizando a ação
-     * @return void
+     * @param array $params Parâmetros adicionais específicos para a ação
+     * @return bool Retorna verdadeiro se a ação foi executada com sucesso
      */
-    public function fold(Room $room, User $user): void
+    public function execute(Room $room, User $user, array $params = []): bool
     {
         // Carrega o estado do jogo
         $this->pokerGameState->load($room->id, $user);
 
         // Verifica se é a vez do jogador
         if (!$this->isPlayerTurn($user->id)) {
-            return;
+            return false;
         }
 
         $round = $room->round;
         
         // Obtém o jogador na rodada atual
         $roundPlayer = $this->getRoundPlayer($round, $user);
+        
+        if (!$roundPlayer) {
+            return false;
+        }
         
         // Marca o jogador como inativo na rodada
         $this->inactivePlayerInRound($roundPlayer);
@@ -43,6 +48,20 @@ class Fold extends BaseAction
         
         // Define o próximo jogador
         $this->setNextPlayerToPlay($round, $roundPlayer);
+        
+        return true;
+    }
+
+    /**
+     * Executa a ação de desistência (fold) - Método para compatibilidade
+     *
+     * @param Room $room Sala onde o jogador está
+     * @param User $user Usuário que está realizando a ação
+     * @return void
+     */
+    public function fold(Room $room, User $user): void
+    {
+        $this->execute($room, $user);
     }
 
     /**

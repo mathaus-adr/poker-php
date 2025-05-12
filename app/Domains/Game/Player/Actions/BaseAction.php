@@ -14,7 +14,7 @@ use App\Models\User;
 /**
  * Classe base para todas as ações do jogador
  */
-abstract class BaseAction
+abstract class BaseAction implements PlayerActionInterface
 {
     public function __construct(protected readonly PokerGameState $pokerGameState)
     {
@@ -93,4 +93,14 @@ abstract class BaseAction
     {
         return RoundActionManager::getTotalBetFromPlayer($round, $userId);
     }
+
+    /**
+     * Método abstrato que deve ser implementado por todas as ações
+     *
+     * @param Room $room Sala onde o jogador está
+     * @param User $user Usuário que está realizando a ação
+     * @param array $params Parâmetros adicionais específicos para a ação
+     * @return bool Retorna verdadeiro se a ação foi executada com sucesso
+     */
+    abstract public function execute(Room $room, User $user, array $params = []): bool;
 } 
