@@ -299,8 +299,8 @@ describe('game stage changer test', function () {
                 $round->refresh();
             }
 
-            Event::assertDispatchedTimes(GameStatusUpdated::class, 15);
-            Bus::assertDispatchedTimes(FoldInactiveUser::class, 14);
+            Event::assertDispatchedTimes(GameStatusUpdated::class, 16);
+            Bus::assertDispatchedTimes(FoldInactiveUser::class, 15);
             Bus::assertNotDispatchedSync(RestartGame::class);
 
             $this->assertDatabaseHas(RoomRound::class, [
