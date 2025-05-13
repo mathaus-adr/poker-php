@@ -8,126 +8,150 @@ use App\Models\Room;
 use App\Models\RoundPlayer;
 use App\Models\User;
 use Illuminate\Support\Arr;
+use Carbon\Carbon;
 
 class PokerGameState implements LoadGameStateInterface
 {
-    private ?array $player;
+    private Room $roomModel;
+    private ?User $user;
 
-    private ?array $players;
+    // Dependencies for rules
+    private GetHand $getHandService;
+    private GetPlayerPossibleActions $getPlayerPossibleActionsService;
 
-    private ?array $playerCards = null;
-
+    private array $player = [];
+    private array $players = [];
+    private array $playerCards = [];
     private ?array $playerTurn = null;
-
-    private ?array $remnantPlayers = null;
+    private array $remnantPlayers = [];
 
     private ?array $flop = null;
     private ?array $turn = null;
     private ?array $river = null;
-    private ?array $playerHand = null;
-    private ?array $playerActions = null;
+    private array $playerHand = [];
+    private array $playerActions = [];
 
-    private bool $gameStarted;
-    private ?int $playerTotalCash;
-    private ?int $playerActualBet;
-    private ?int $totalBetToJoin = null;
-    private ?int $totalPot = null;
+    private bool $gameStarted = false;
+    private ?int $playerTotalCash = null;
+    private ?int $playerActualBet = null;
+    private int $totalBetToJoin = 0;
+    private int $totalPot = 0;
 
     private bool $isShowDown = false;
-
     private ?array $lastPlayerFolded = null;
-
-    private ?Room $room;
-
     private ?int $countdown = null;
-    /**
-     * @var mixed|null
-     */
     private ?int $playerTurnId = null;
-    /**
-     * @var mixed[]
-     */
-    private ?array $roundActions;
+    private array $roundActions = [];
+
+    // Constructor to inject main dependencies
+    public function __construct(GetHand $getHand, GetPlayerPossibleActions $getPlayerPossibleActions)
+    {
+        $this->getHandService = $getHand;
+        $this->getPlayerPossibleActionsService = $getPlayerPossibleActions;
+    }
 
     public function load(int $roomId, ?User $user = null): PokerGameState
     {
-        $this->room = Room::with('roomUsers', 'actions', 'round')->findOrFail($roomId);
-        $round = $this->room->round;
-        $roomData = $this->room->data;
-        $roomUsers = $this->room->roomUsers;
+        $this->roomModel = Room::with(['roomUsers.user', 'actions', 'round.actions', 'round.roundPlayers'])->findOrFail($roomId);
+        $this->user = $user;
 
-        $this->players = $roomUsers->load('user')->toArray() ?? null;
-        $this->playerTurnId = $round->player_turn_id ?? null;
-        $this->player = collect($this->players)->filter(function ($player) use ($user) {
-            return $player['user_id'] === $user->id;
-        })->first();
+        $this->loadRoomAndRoundState();
+        $this->loadPlayersState();
 
-        $this->roundActions = $round?->actions?->toArray();
-        $this->gameStarted = !is_null($round);
-        $this->remnantPlayers = $this->orderRemnantPlayers();
-        $this->lastPlayerFolded = $roomData['last_player_folded'] ?? null;
-
-        if ($this->gameStarted) {
-            $this->playerCards = $this->getPlayerPrivateCards();
-
-            $this->flop = $roomData['flop'] ?? null;
-            $this->turn = $roomData['turn'] ?? null;
-            $this->river = $roomData['river'] ?? null;
-
-            $this->playerHand = $this->getHand();
-
-            $this->playerTotalCash = $this->getPlayerTotalCash();
-            $this->playerActualBet = $this->getPlayerActualBet();
-            $this->playerActions = app(GetPlayerPossibleActions::class)->getActionsForPlayer(
-                $this->room,
-                $user
-            );
-
-            $this->totalBetToJoin = $round->current_bet_amount_to_join ?? 0;
-            $this->totalPot = $round->total_pot ?? 0;
-            $this->isShowDown = $round->phase === 'end';
-            $carbonDate = $this->room->updated_at->clone();
-            $carbonDate->addSeconds(30);
-
-            $secondsDiff = now()->diffInSeconds($carbonDate);
-
-            if ($secondsDiff > 30) {
-                $this->countdown = 0;
-            } else {
-                $this->countdown = $secondsDiff;
-            }
+        if ($this->user) {
+            $this->loadSpecificPlayerState();
         }
+        
+        $this->calculateCountdown();
 
         return $this;
     }
 
+    private function loadRoomAndRoundState(): void
+    {
+        $round = $this->roomModel->round;
+        $roomData = $this->roomModel->data ?? [];
+
+        $this->gameStarted = !is_null($round);
+        $this->lastPlayerFolded = $roomData['last_player_folded'] ?? null;
+        $this->roundActions = $round?->actions?->toArray() ?? [];
+
+        if ($this->gameStarted) {
+            $this->playerTurnId = $round->player_turn_id ?? null;
+            $this->flop = Arr::get($roomData, 'cards.flop');
+            $this->turn = Arr::get($roomData, 'cards.turn');
+            $this->river = Arr::get($roomData, 'cards.river');
+            $this->totalBetToJoin = $round->current_bet_amount_to_join ?? 0;
+            $this->totalPot = $round->total_pot ?? 0;
+            $this->isShowDown = $round->phase === 'end';
+        }
+    }
+
+    private function loadPlayersState(): void
+    {
+        $this->players = $this->roomModel->roomUsers->toArray();
+        $this->remnantPlayers = $this->orderRemnantPlayers();
+    }
+
+    private function loadSpecificPlayerState(): void
+    {
+        if (!$this->user) return;
+
+        $this->player = collect($this->players)->firstWhere('user_id', $this->user->id) ?? [];
+
+        if (empty($this->player)) return;
+
+        if ($this->gameStarted) {
+            $this->playerCards = Arr::get($this->player, 'user_info.cards', []);
+            $this->playerHand = $this->getHandService->getHand($this->getAllPlayerCards());
+            $this->playerTotalCash = $this->getPlayerTotalCash();
+            $this->playerActualBet = $this->getPlayerActualBet();
+            
+            $this->playerActions = $this->getPlayerPossibleActionsService->getActionsForPlayer(
+                $this->roomModel,
+                $this->user
+            );
+        }
+    }
+
+    private function calculateCountdown(): void
+    {
+        if (!$this->gameStarted || !$this->roomModel->round || !$this->roomModel->round->player_turn_id) {
+            $this->countdown = 0;
+            return;
+        }
+
+        $lastActivityTime = $this->roomModel->round->updated_at ?? $this->roomModel->updated_at;
+        $timeoutSeconds = 30;
+
+        $deadline = $lastActivityTime->clone()->addSeconds($timeoutSeconds);
+
+        if (Carbon::now()->greaterThan($deadline)) {
+            $this->countdown = 0;
+        } else {
+            $this->countdown = Carbon::now()->diffInSeconds($deadline, false);
+            $this->countdown = max(0, $this->countdown);
+        }
+    }
+
     private function getHand(): ?array
     {
-        $cards = $this->getAllPlayerCards();
-
-        return app(GetHand::class)->getHand($cards);
+        return $this->playerHand;
     }
 
     private function getPlayerPrivateCards(): ?array
     {
-        return Arr::get($this->player, 'user_info.cards', []);
+        return $this->playerCards;
     }
 
-    /**
-     * @param array|null $players
-     * @param int $playerId
-     * @return mixed
-     */
     public function getPlayerRoomInformation(): ?array
     {
-        return collect($this->getPlayers())->filter(function ($player) {
-            return $player['user_id'] === $this->player['user_id'];
-        })->first();
+        return $this->player;
     }
 
     public function getPlayerTotalCash(): ?int
     {
-        return $this->player['cash'] ?? null;
+        return Arr::get($this->player, 'cash');
     }
 
     public function getPlayers(): ?array
@@ -137,7 +161,7 @@ class PokerGameState implements LoadGameStateInterface
 
     public function getPlayerActualBet(): ?int
     {
-        return $this->getPlayerRoomInformation()['total_round_bet'] ?? null;
+        return Arr::get($this->player, 'total_round_bet');
     }
 
     public function getRemnantPlayers(): ?array
@@ -182,7 +206,10 @@ class PokerGameState implements LoadGameStateInterface
 
     public function getPlayerTurn(): ?array
     {
-        return $this->playerTurn;
+        if ($this->playerTurnId && !empty($this->players)) {
+            return collect($this->players)->firstWhere('user_id', $this->playerTurnId);
+        }
+        return null;
     }
 
     public function isPlayerTurn(int $playerId): bool
@@ -197,60 +224,101 @@ class PokerGameState implements LoadGameStateInterface
 
     public function loadFromArray(array $data): PokerGameState
     {
-        $this->player = $data['player'];
-        $this->playerCards = $data['playerCards'];
-        $this->playerTurn = $data['playerTurn'];
-        $this->remnantPlayers = $data['remnantPlayers'];
-        $this->flop = $data['flop'];
-        $this->turn = $data['turn'];
-        $this->river = $data['river'];
-        $this->playerHand = $data['playerHand'];
-        $this->playerActions = $data['playerActions'];
-        $this->gameStarted = $data['gameStarted'];
-        $this->playerTotalCash = $data['playerTotalCash'];
-        $this->playerActualBet = $data['playerActualBet'];
-        $this->players = $data['players'];
+        // Note: This method is primarily for Livewire hydration.
+        // The $roomModel and $user properties are not part of the dehydrated data, 
+        // as they are expected to be re-loaded or handled differently in a typical Livewire component lifecycle.
+        // If they were needed, the dehydration/hydration process would be more complex.
+
+        $this->player = $data['player'] ?? [];
+        $this->players = $data['players'] ?? [];
+        $this->playerCards = $data['playerCards'] ?? [];
+        $this->playerTurn = $data['playerTurn'] ?? null;
+        $this->remnantPlayers = $data['remnantPlayers'] ?? [];
+        $this->flop = $data['flop'] ?? null;
+        $this->turn = $data['turn'] ?? null;
+        $this->river = $data['river'] ?? null;
+        $this->playerHand = $data['playerHand'] ?? [];
+        $this->playerActions = $data['playerActions'] ?? [];
+        $this->gameStarted = $data['gameStarted'] ?? false;
+        $this->playerTotalCash = $data['playerTotalCash'] ?? null;
+        $this->playerActualBet = $data['playerActualBet'] ?? null;
+        $this->totalPot = $data['totalPot'] ?? 0;
+        // $this->totalBetToJoin is not in dehydrate, set to default or calculate if needed
+        // $this->isShowDown is not in dehydrate
+        // $this->lastPlayerFolded is not in dehydrate
+        // $this->countdown is not in dehydrate (and typically dynamically calculated)
+        // $this->playerTurnId is not explicitly in dehydrate, but part of playerTurn
+        // $this->roundActions is not in dehydrate
+
+        // Potentially re-derive some state if necessary based on hydrated data,
+        // for example, playerTurnId from playerTurn:
+        if ($this->playerTurn) {
+            $this->playerTurnId = $this->playerTurn['user_id'] ?? null;
+        }
+        
+        // Note: Properties like $roomModel, $user, $totalBetToJoin, $isShowDown, $lastPlayerFolded, $countdown, $roundActions
+        // are NOT part of the dehydrated data. If a fully functional PokerGameState is needed after hydration
+        // without calling load(), these would need to be handled, potentially by including them in dehydration
+        // or by having the Livewire component re-trigger a full load if necessary.
+        // For now, this makes the hydrated state consistent with dehydrated state.
+
         return $this;
     }
 
-    /**
-     * @param array|null $flop
-     * @param array|null $turn
-     * @param array|null $river
-     * @return array|null
-     */
     public function getAllPlayerCards(): ?array
     {
-        $cards = $this->getPlayerPrivateCards() ?? null;
-
+        $communityCards = [];
         if ($this->flop) {
-            $cards = array_merge($cards, $this->flop);
+            $communityCards = array_merge($communityCards, $this->flop);
         }
-
         if ($this->turn) {
-            $cards = array_merge($cards, $this->turn);
+            $communityCards = array_merge($communityCards, $this->turn);
         }
-
         if ($this->river) {
-            $cards = array_merge($cards, $this->river);
+            $communityCards = array_merge($communityCards, $this->river);
+        }
+        
+        $actualPlayerCards = is_array($this->playerCards) ? $this->playerCards : [];
+        
+        if (empty($actualPlayerCards) && empty($communityCards)) {
+            return null;
         }
 
-        return $cards;
+        return array_merge($actualPlayerCards, $communityCards);
     }
 
     public function isAllPlayersWithSameBet(): bool
     {
-        $actionsCollection = collect($this->roundActions);
-        $actionsGroupedByIdCollection = $actionsCollection->groupBy('user_id');
-        $firstPlayerTotalBet = $actionsGroupedByIdCollection->shift()->sum('amount');
-        $allPlayersWithSameBet = true;
-        $actionsGroupedByIdCollection->each(function ($playerActions) use ($firstPlayerTotalBet, &$allPlayersWithSameBet) {
-            $playerTotalBet = $playerActions->sum('amount');
-            if ($playerTotalBet !== $firstPlayerTotalBet) {
-                $allPlayersWithSameBet = false;
-            }
-        });
+        if (empty($this->roundActions) || empty($this->remnantPlayers)) {
+            return true;
+        }
 
+        $actionsCollection = collect($this->roundActions);
+        
+        $remnantPlayerIds = array_column($this->remnantPlayers, 'user_id');
+        $relevantActions = $actionsCollection->whereIn('user_id', $remnantPlayerIds);
+
+        if ($relevantActions->isEmpty()) {
+            return true;
+        }
+
+        $actionsGroupedByIdCollection = $relevantActions->groupBy('user_id');
+        
+        $firstPlayerTotalBet = null;
+        $allPlayersWithSameBet = true;
+
+        foreach ($actionsGroupedByIdCollection as $userId => $playerActions) {
+            $playerTotalBet = $playerActions->sum('amount');
+            if (is_null($firstPlayerTotalBet)) {
+                $firstPlayerTotalBet = $playerTotalBet;
+            } elseif ($playerTotalBet !== $firstPlayerTotalBet) {
+                $playerInQuestion = collect($this->remnantPlayers)->firstWhere('user_id', $userId);
+                if ($playerInQuestion && Arr::get($playerInQuestion, 'status', true)) {
+                    $allPlayersWithSameBet = false;
+                    break;
+                }
+            }
+        }
         return $allPlayersWithSameBet;
     }
 
@@ -261,12 +329,15 @@ class PokerGameState implements LoadGameStateInterface
 
     public function getTotalPot(): int
     {
-        return $this->totalPot ?? 0;
+        return $this->totalPot;
     }
 
     public function canStartAGame(): bool
     {
-        return !$this->gameStarted && count($this->players) >= 3;
+        if ($this->gameStarted) {
+            return false;
+        }
+        return $this->roomModel->roomUsers()->count() >= 2;
     }
 
     public function getLastPlayerFolded(): ?array
@@ -274,31 +345,21 @@ class PokerGameState implements LoadGameStateInterface
         return $this->lastPlayerFolded;
     }
 
-    /**
-     * @return mixed[]
-     */
-    public function orderRemnantPlayers(): ?array
+    public function orderRemnantPlayers(): array
     {
-        $players = collect($this->getPlayers());
-
-        $greaterPlayersIndexes = collect($players)->filter(function ($player) {
-            return $player['user_id'] !== $this->player['user_id'] && Arr::get($player, 'order') > Arr::get($this->player, 'order');
-        })->toArray();
-
-        $minorPlayerIndexes = collect($players)->filter(function ($player) {
-            return $player['user_id'] !== $this->player['user_id'] && Arr::get($this->player, 'order') > Arr::get($player, 'order');
-        })->toArray();
-
-        if (count($greaterPlayersIndexes) === 0 && count($minorPlayerIndexes) === 0) {
-            return $players->where('user.id', '!=', $this->player['user_id'])->toArray();
+        if ($this->roomModel->round && $this->roomModel->round->relationLoaded('roundPlayers')) {
+            return $this->roomModel->round->roundPlayers
+                ->where('status', true)
+                ->sortBy('order')
+                ->values()
+                ->toArray();
         }
-
-        return collect()->merge($greaterPlayersIndexes)->merge($minorPlayerIndexes)->unique('id')->values()->toArray();
+        return [];
     }
 
-    public function getRoom(): ?Room
+    public function getRoom(): Room
     {
-        return $this->room;
+        return $this->roomModel;
     }
 
     public function getCountdown(): ?int
@@ -308,6 +369,6 @@ class PokerGameState implements LoadGameStateInterface
 
     public function getTotalBetToJoin(): int
     {
-        return $this->totalBetToJoin ?? 0;
+        return $this->totalBetToJoin;
     }
 }
