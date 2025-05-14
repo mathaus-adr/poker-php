@@ -18,11 +18,10 @@ readonly class StartPokerGame
     {
     }
 
-    public function execute(Room $room)
+    public function execute(Room $room): void
     {
         $currentRoom = $room->data;
         $gameCards = Cards::getCards();
-        $currentRoom['round_started'] = true;
         $currentRoom['cards'] = collect($gameCards)->shuffle($this->shuffleSeed)->toArray();
 
         $currentRoom['round_players'] = RoomUser::where('room_id', $room->id)->get()->toArray();
@@ -46,9 +45,7 @@ readonly class StartPokerGame
 
 
         $playerTurns = $players->push($dealerAndBigBlind->shift(), $dealerAndBigBlind->shift());
-        //penultimo
         $currentRoom['dealer'] = $playerTurns[$playerTurns->count() - 2];
-        //ultimo
         $currentRoom['big_blind'] = $playerTurns[$playerTurns->count() - 1];
 
         $currentRoom['small_blind'] = $playerTurns->first();
@@ -58,63 +55,46 @@ readonly class StartPokerGame
         $currentRoom['big_blind']['total_round_bet'] = $currentRoom['config']['big_blind_amount'] = 10;
         $currentRoom['small_blind']['total_round_bet'] = $currentRoom['config']['small_blind_amount'] = 5;
 
-        $currentRoom['big_blind']['cash'] -= $currentRoom['big_blind']['total_round_bet'];
-        $currentRoom['small_blind']['cash'] -= $currentRoom['small_blind']['total_round_bet'];
-
         $playerTurns = $playerTurns->replace([
             0 => $currentRoom['small_blind'],
             ($playerTurns->count() - 1) => $currentRoom['big_blind']
         ]);
 
-        $currentRoom['players_actions'] = $playerTurns;
-
-        $currentRoom['pot'] = $currentRoom['config']['big_blind_amount'] + $currentRoom['config']['small_blind_amount'];
-
         $data = [
-            'total_pot' => $currentRoom['pot'],
-            'player_bets' => [
-                [
-                    'user_id' => $playerTurns->first()['user_id'],
-                    'amount' => $currentRoom['config']['small_blind_amount']
-                ],
-                [
-                    'user_id' => $playerTurns[$playerTurns->count() - 1]['user_id'],
-                    'amount' => $currentRoom['config']['big_blind_amount']
-                ]
-            ],
-            'players' => $playerTurns->toArray(),
             'current_bet_amount_to_join' => $currentRoom['config']['big_blind_amount'],
             'current_player_to_bet' => $playerTurns->first(),
-            'round_started' => true,
             'cards' => array_merge($currentRoom['flop'], $currentRoom['turn'], $currentRoom['river']),
-            'phase' => 'pre-flop',
-            'last_player_folded' => null,
-            'folded_players' => null
         ];
 
-        $this->subtractAmountFromUserCash($room, $currentRoom['big_blind']['user_id'], $currentRoom['config']['big_blind_amount']);;
-        $this->subtractAmountFromUserCash($room, $currentRoom['small_blind']['user_id'], $currentRoom['config']['small_blind_amount']);;
+        $this->subtractAmountFromUserCash($room, $currentRoom['big_blind']['user_id'], $currentRoom['config']['big_blind_amount']);
+        $this->subtractAmountFromUserCash($room, $currentRoom['small_blind']['user_id'], $currentRoom['config']['small_blind_amount']);
 
         $roundData = [
             'dealer_id' => $currentRoom['dealer']['user_id'],
             'big_blind_id' => $currentRoom['big_blind']['user_id'],
             'small_blind_id' => $currentRoom['small_blind']['user_id'],
             'total_players_in_round' => $playerTurns->count(),
-            'total_pot' => $currentRoom['pot'],
+            'total_pot' => $currentRoom['config']['big_blind_amount'] + $currentRoom['config']['small_blind_amount'],
             'current_bet_amount_to_join' => $currentRoom['config']['big_blind_amount'],
             'player_turn_id' => $data['current_player_to_bet']['user_id']
         ];
 
-        $roundActionData = $data['player_bets'];
+        $roundActionData = [
+            [
+                'user_id' => $playerTurns->first()['user_id'],
+                'amount' => $currentRoom['config']['small_blind_amount']
+            ],
+            [
+                'user_id' => $playerTurns[$playerTurns->count() - 1]['user_id'],
+                'amount' => $currentRoom['config']['big_blind_amount']
+            ]
+        ];
+
         $room->data = $data;
-//        $room->player_turn_id = $data['current_player_to_bet']['id'];
         $room->save();
 
         foreach ($playerTurns as $playerCards) {
-            RoomUser::where([
-                'room_id' => $room->id,
-                'user_id' => $playerCards['user_id']
-            ])->update(['user_info' => ['cards' => $playerCards['private_cards']]]);
+            $this->storeRoomUserInformation($room, $playerCards);
         }
 
         $round = $this->storeRoomRound($room, $roundData);
@@ -154,7 +134,7 @@ readonly class StartPokerGame
         }
     }
 
-    private function storeRoundPlayers(RoomRound $round, \Illuminate\Support\Collection $playerTurns)
+    private function storeRoundPlayers(RoomRound $round, \Illuminate\Support\Collection $playerTurns): void
     {
         $order = 1;
         foreach ($playerTurns as $player) {
@@ -177,5 +157,18 @@ readonly class StartPokerGame
                 'room_id' => $room->id]
         )
             ->update(['cash' => DB::raw('cash - ' . $amount)]);
+    }
+
+    /**
+     * @param  Room  $room
+     * @param  mixed  $playerCards
+     * @return void
+     */
+    public function storeRoomUserInformation(Room $room, mixed $playerCards): void
+    {
+        RoomUser::where([
+            'room_id' => $room->id,
+            'user_id' => $playerCards['user_id']
+        ])->update(['user_info' => ['cards' => $playerCards['private_cards']]]);
     }
 }

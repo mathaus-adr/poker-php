@@ -84,10 +84,10 @@ class RoomRoundObserver
         $canChangePhaseFromGame = app(ChangeRoundStageChecker::class)->execute($round);
 
         if ($canChangePhaseFromGame && $round->phase === 'river') {
-            $strongestHands = app(HandComparator::class)->execute($round);
-            $round->updateQuietly(['winner_id' => $strongestHands['user_id'], 'phase' => 'end']);
+            $userHand = app(HandComparator::class)->execute($round);
+            $round->updateQuietly(['winner_id' => $userHand->userId, 'phase' => 'end']);
             RoomUser::where('room_id', $round->room->id)
-                ->where('user_id', $strongestHands['user_id'])
+                ->where('user_id', $userHand->userId)
                 ->update(['cash' => DB::raw('cash + '.$round->total_pot)]);
             event(new GameStatusUpdated($round->room_id));
             RestartGame::dispatch($round->room)->delay(now()->addSeconds(7));

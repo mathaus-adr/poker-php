@@ -15,7 +15,6 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
     public ?User $player;
     #[\Livewire\Attributes\Modelable]
     public ?PokerGameState $pokerGameState;
-    public $total_raise = 0;
 
     public function mount($id): void
     {
@@ -28,7 +27,6 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
         }
 
         $this->pokerGameState = (new PokerGameState())->load($this->room->id, $this->player);
-        $countdown = $this->room->updated_at->diffInSeconds(now()->addSeconds(30));
     }
 
     public function getListeners(): array
@@ -52,12 +50,6 @@ new #[\Livewire\Attributes\Layout('layouts.app')] class extends Component {
     {
         $this->pokerGameState = (new PokerGameState())->load($this->room->id, $this->player);
     }
-
-//    public function aumentar($raiseAmount): void
-//    {
-//        $raise = app(\App\Domains\Game\Actions\Raise::class);
-//        $raise->raise($this->room, auth()->user(), $raiseAmount);
-//    }
 
     #[NoReturn] public function emitSoundByEvent($event): void
     {

@@ -9,14 +9,13 @@ class PokerGameStateSynthesizer extends Synth
 {
     public static string $key = 'poker-game-state';
 
-    static function match($target)
+    public static function match($target): bool
     {
         return $target instanceof PokerGameState;
     }
 
     public function dehydrate(PokerGameState $target)
     {
-//        dd($target->isShowDown());
         return [[
             'player' => $target->getPlayer(),
             'playerCards' => $target->getPlayerCards(),
