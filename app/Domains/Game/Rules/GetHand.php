@@ -2,12 +2,19 @@
 
 namespace App\Domains\Game\Rules;
 
-use App\Domains\Game\Cards\Card;
 use App\Domains\Game\Cards\Enums\Hands;
 use App\Domains\Game\Cards\Hands\HandCalculator;
+use App\Domains\Game\Cards\Hands\HandEvaluator;
 
 class GetHand
 {
+    private HandEvaluator $handEvaluator;
+    
+    public function __construct(HandEvaluator $handEvaluator = null)
+    {
+        $this->handEvaluator = $handEvaluator ?? new HandEvaluator();
+    }
+    
     public function getHand(?array $cards): ?array
     {
         if (!$cards || count($cards) == 0) {
@@ -17,7 +24,6 @@ class GetHand
         usort($cards, function ($a, $b) {
             return $a['carta'] <= $b['carta'];
         });
-
 
         if (count($cards) == 2) {
             if ($cards[0]['carta'] == $cards[1]['carta']) {
@@ -41,11 +47,15 @@ class GetHand
             ];
         }
 
-        if ($cards > 2) {
-
-            $handCalculator = new HandCalculator();
-            return $handCalculator->calculateBestHand($cards);
+        if (count($cards) > 2) {
+            // Usa o novo avaliador de mãos
+            return $this->handEvaluator->evaluateHand($cards);
         }
+        
+        return [
+            'hand' => Hands::HighCard->value,
+            'cards' => []
+        ];
     }
 
     private function mapCards($cards): array

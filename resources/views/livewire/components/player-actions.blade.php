@@ -1,5 +1,6 @@
 <?php
 
+use App\Domains\Game\Player\Actions\PlayerActionFactory;
 use App\Domains\Game\PokerGameState;
 use App\Domains\Game\Room\Actions\LeaveRoom;
 use App\Models\Room;
@@ -9,35 +10,49 @@ new class extends \Livewire\Volt\Component {
     #[\Livewire\Attributes\Reactive]
     public PokerGameState $pokerGameState;
     public Room $room;
+    public int $raiseAmount = 0;
 
     public function mount($pokerGameState)
     {
         $this->pokerGameState = $pokerGameState;
         $this->room = $pokerGameState->getRoom();
+        $this->raiseAmount = $this->pokerGameState->getTotalBetToJoin() * 2;
     }
 
-
-    public function pagar(\App\Domains\Game\Player\Actions\Pay $pay): void
+    public function executeAction(string $actionType, ?int $amount = null): void
     {
-        $pay->execute($this->room, auth()->user());
+        $params = [];
+        if ($amount !== null) {
+            $params['amount'] = $amount;
+        }
+        
+        $action = PlayerActionFactory::createAction($actionType, $this->pokerGameState);
+        $action->execute($this->room, auth()->user(), $params);
+    }
+
+    public function pagar(): void
+    {
+        $this->executeAction('pay');
     }
 
     public function fold(): void
     {
-        $fold = app(\App\Domains\Game\Player\Actions\Fold::class);
-        $fold->fold($this->room, auth()->user());
+        $this->executeAction('fold');
     }
 
     public function check(): void
     {
-        $check = app(\App\Domains\Game\Player\Actions\Check::class);
-        $check->check($this->room, auth()->user());
+        $this->executeAction('check');
     }
 
     public function allin(): void
     {
-        $allin = app(\App\Domains\Game\Player\Actions\AllIn::class);
-        $allin->execute($this->room, auth()->user());
+        $this->executeAction('allin');
+    }
+    
+    public function aumentar(int $amount): void
+    {
+        $this->executeAction('raise', $amount);
     }
 
     public function startGame(Room $room, \App\Domains\Game\StartPokerGame $startPokerGame): void

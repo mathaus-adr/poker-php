@@ -1,89 +1,73 @@
 <?php
 
-namespace app\Domains\Game\Player\Actions;
+namespace App\Domains\Game\Player\Actions;
 
-use App\Domains\Game\PokerGameState;
 use App\Models\Room;
-use App\Models\RoomRound;
 use App\Models\RoomUser;
-use App\Models\RoundAction;
-use App\Models\RoundPlayer;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
-class AllIn
+class AllIn extends BaseAction
 {
-    public function __construct(private PokerGameState $pokerGameState)
+    /**
+     * Executa a ação de all-in
+     *
+     * @param Room $room Sala onde o jogador está
+     * @param User $user Usuário que está realizando a ação
+     * @param array $params Parâmetros adicionais específicos para a ação
+     * @return bool Retorna verdadeiro se a ação foi executada com sucesso
+     */
+    public function execute(Room $room, User $user, array $params = []): bool
     {
-    }
-    public function execute(Room $room, User $user): void
-    {
+        // Carrega o estado do jogo
         $this->pokerGameState->load($room->id, $user);
 
-        if (!$this->pokerGameState->isPlayerTurn($user->id)) {
-            return;
+        // Verifica se é a vez do jogador
+        if (!$this->isPlayerTurn($user->id)) {
+            return false;
         }
+        
         $round = $room->round;
+        
+        // Obtém o jogador na rodada atual
         $roundPlayer = $this->getRoundPlayer($round, $user);
+        
+        if (!$roundPlayer) {
+            return false;
+        }
 
-        $playerTotalCash = RoomUser::where([
+        // Obtém o dinheiro total do jogador
+        $roomUser = RoomUser::where([
             'room_id' => $room->id,
-            'user_id' => $user->id
-        ])->first()->cash;
-
-        $this->storeRoundAction($user, $round, $playerTotalCash);
-        $this->setNextPlayerToPlay($round, $roundPlayer);
-        $this->subtractCashFromPlayer($room, $user, $playerTotalCash);
-    }
-
-    private function storeRoundAction(User $user, RoomRound $round, int $amount): void
-    {
-        RoundAction::create(
-            [
-                'room_round_id' => $round->id,
-                'user_id' => $user->id,
-                'amount' => $amount,
-                'action' => 'allin',
-                'round_phase' => $round->phase
-            ]
-        );
-
-        $round->update(['total_pot' => DB::raw('total_pot + ' . $amount)]);
-    }
-
-    private function setNextPlayerToPlay(RoomRound $round, RoundPlayer $roundPlayer): void
-    {
-        $nextPlayerWithHighOrder = RoundPlayer::where('room_round_id', $round->id)
-            ->where('status', true)
-            ->where('order', '>', $roundPlayer->order)
-            ->first();
-
-        if ($nextPlayerWithHighOrder) {
-            $round->update(['player_turn_id' => $nextPlayerWithHighOrder->user_id]);
-            return;
-        }
-
-        $nextPlayerWithMinorOrder = RoundPlayer::where('room_round_id', $round->id)
-            ->where('status', true)->where('order', '>=', 1)->first();
-
-        if ($nextPlayerWithMinorOrder) {
-            $round->update(['player_turn_id' => $nextPlayerWithMinorOrder->user_id]);
-        }
-    }
-
-    private function getRoundPlayer(RoomRound $round, User $user): RoundPlayer
-    {
-        return RoundPlayer::where([
-            'room_round_id' => $round->id,
             'user_id' => $user->id
         ])->first();
-    }
+        
+        if (!$roomUser || $roomUser->cash <= 0) {
+            return false;
+        }
+        
+        $playerTotalCash = $roomUser->cash;
 
-    private function subtractCashFromPlayer(Room $room, User $user, int $totalCashToPay): void
+        // Registra a ação
+        $this->storeRoundAction($user, $round, $playerTotalCash, 'allin');
+        
+        // Define o próximo jogador
+        $this->setNextPlayerToPlay($round, $roundPlayer);
+        
+        // Subtrai o dinheiro do jogador
+        $success = $this->subtractCashFromPlayer($room, $user->id, $playerTotalCash);
+        
+        return $success;
+    }
+    
+    /**
+     * Executa a ação de all-in - Método para compatibilidade
+     *
+     * @param Room $room Sala onde o jogador está
+     * @param User $user Usuário que está realizando a ação
+     * @return void
+     */
+    public function allIn(Room $room, User $user): void
     {
-        RoomUser::where([
-            'room_id' => $room->id,
-            'user_id' => $user->id
-        ])->update(['cash' => DB::raw('cash - ' . $totalCashToPay)]);
+        $this->execute($room, $user);
     }
 }

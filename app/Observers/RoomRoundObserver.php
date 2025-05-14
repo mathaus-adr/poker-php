@@ -4,6 +4,9 @@ namespace App\Observers;
 
 use App\Domains\Game\Cards\Hands\HandComparator;
 use App\Domains\Game\Room\GameStage\ChangeRoundStageChecker;
+use App\Domains\Game\Room\GameStage\State\EndState;
+use App\Domains\Game\Room\GameStage\State\GamePhaseContext;
+use App\Domains\Game\Room\GameStage\State\GamePhaseStateFactory;
 use App\Events\GameStatusUpdated;
 use App\Jobs\FoldInactiveUser;
 use App\Jobs\RestartGame;
@@ -17,6 +20,9 @@ use Illuminate\Support\Str;
 
 class RoomRoundObserver
 {
+    /**
+     * Mapeamento das fases do jogo para compatibilidade
+     */
     private array $phaseMap = [
         'pre_flop' => 'flop',
         'flop' => 'turn',
@@ -53,44 +59,31 @@ class RoomRoundObserver
         }
     }
 
+    /**
+     * Método para manter compatibilidade com código existente
+     * Usa o padrão State para configurar as cartas da mesa
+     */
     private function setPhaseCardsOnRoom(RoomRound $round): void
     {
-        $room = $round->room;
-        $roomData = $room->data;
-
-        if ($round->phase == 'flop') {
-            $roomData['flop'] = [];
-            $roomData['flop'][] = array_shift($roomData['cards']);
-            $roomData['flop'][] = array_shift($roomData['cards']);
-            $roomData['flop'][] = array_shift($roomData['cards']);
-        }
-
-        if ($round->phase == 'turn') {
-            $roomData['turn'] = [];
-            $roomData['turn'][] = array_shift($roomData['cards']);
-        }
-
-        if ($round->phase == 'river') {
-            $roomData['river'] = [];
-            $roomData['river'][] = array_shift($roomData['cards']);
-        }
-
-        $room->data = $roomData;
-        $room->saveQuietly();
+        // Cria o contexto com o estado atual
+        $phaseContext = new GamePhaseContext(
+            GamePhaseStateFactory::createState($round->phase)
+        );
+        
+        // Configura a mesa de acordo com a fase atual
+        $phaseContext->getState()->setupTable($round, $round->room);
     }
 
     private function changeGameStatus(RoomRound $round): void
     {
+        // Cria o contexto e o checker
+        $phaseContext = new GamePhaseContext();
         $canChangePhaseFromGame = app(ChangeRoundStageChecker::class)->execute($round);
 
         if ($canChangePhaseFromGame && $round->phase === 'river') {
-            $strongestHands = app(HandComparator::class)->execute($round);
-            $round->updateQuietly(['winner_id' => $strongestHands['user_id'], 'phase' => 'end']);
-            RoomUser::where('room_id', $round->room->id)
-                ->where('user_id', $strongestHands['user_id'])
-                ->update(['cash' => DB::raw('cash + '.$round->total_pot)]);
-            event(new GameStatusUpdated($round->room_id));
-            RestartGame::dispatch($round->room)->delay(now()->addSeconds(7));
+            // Caso especial para a fase river, usa diretamente o estado End para manter compatibilidade
+            $endState = new EndState();
+            $endState->execute($round);
             return;
         }
 
@@ -100,17 +93,25 @@ class RoomRoundObserver
             ->latest()
             ->first();
 
+        // Verifica se a última ação existe antes de chamar toArray()
+        if ($lastPlayerAction) {
+            Log::info('last_player_action',
+                array_merge(
+                    $lastPlayerAction->toArray(),
+                    ['can_change_phase' => $canChangePhaseFromGame]
+                )
+            );
 
-        Log::info('last_player_action',
-            array_merge(
-                $lastPlayerAction->toArray(),
-                ['can_change_phase' => $canChangePhaseFromGame]
-            )
-        );
-
-        $this->processAction($round, $lastPlayerAction);
+            $this->processAction($round, $lastPlayerAction);
+        } else {
+            Log::info('last_player_action', [
+                'message' => 'No last player action found',
+                'can_change_phase' => $canChangePhaseFromGame
+            ]);
+        }
 
         if ($canChangePhaseFromGame) {
+            // Se puder mudar de fase, atualiza a fase usando o mapeamento e configura a mesa
             $round->phase = $this->phaseMap[$round->phase] ?? $round->phase;
             $this->setPhaseCardsOnRoom($round);
         }
@@ -127,7 +128,7 @@ class RoomRoundObserver
             if ($playersCount === 1) {
                 RoomUser::where('room_id', $room->id)
                     ->where('user_id', $round->player_turn_id)
-                    ->update(['cash' => DB::raw('cash + '.$round->total_pot)]);
+                    ->update(attributes: ['cash' => DB::raw('cash + '.$round->total_pot)]);
                 RestartGame::dispatch($room)->delay(now()->addSeconds(7));
             }
         }

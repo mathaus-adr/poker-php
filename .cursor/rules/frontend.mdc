@@ -1,0 +1,8 @@
+---
+description: 
+globs: resources/**/*.blade.php
+alwaysApply: false
+---
+- O frontend dessa aplicação é desenvolvida com Livewire e AlpineJS
+- Deve ser estilizado somente com TailwindCSS na versão 3
+- Deve respeitar os retornos vindos das classes implementadas no diretório app/Domains desse projeto

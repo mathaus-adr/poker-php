@@ -2,7 +2,7 @@
 
 namespace App\Domains\Game\Room\Actions;
 
-use App\Domains\Game\Player\Actions\Fold;
+use App\Domains\Game\Player\Actions\PlayerActionFactory;
 use App\Domains\Game\PokerGameState;
 use App\Events\GameStatusUpdated;
 use App\Events\RoomListUpdatedEvent;
@@ -22,14 +22,18 @@ readonly class LeaveRoom
     {
         $this->pokerGameState->load($room->id, $user);
         $playerCountInRoom = RoomUser::where('room_id', $room->id)->count();
+        
         if ($this->pokerGameState->isPlayerTurn($user->id) && $playerCountInRoom > 1) {
-            app(Fold::class)->fold($room, $user);
+            $foldAction = PlayerActionFactory::createAction('fold', $this->pokerGameState);
+            $foldAction->execute($room, $user);
+            
             RoomUser::query()
                 ->where('room_id', $room->id)
                 ->where('user_id', $user->id)
                 ->delete();
             return;
         }
+        
         $round = $room->round;
         if ($round) {
             $roundPlayer = RoundPlayer::where(

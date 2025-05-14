@@ -11,6 +11,10 @@ class HandCalculator
 
     public function calculateBestHand(array $cards): array
     {
+        if (empty($cards)) {
+            return ['hand' => Hands::HighCard->value, 'cards' => []];
+        }
+
         if ($this->isRoyalStraightFlush($cards)) {
             return ['hand' => Hands::RoyalFlush->value, 'cards' => $this->mapCards($this->getFlushCards($cards))];
         }
@@ -78,14 +82,12 @@ class HandCalculator
         }
 
         if ($this->isTwoPair($cards)) {
-
             return [
                 'hand' => Hands::TwoPair->value,
                 'cards' => $this->mapCards(
                     $this->getPairs($cards)->shift(2)
                         ->flatten(1)
                         ->toArray())
-
             ];
         }
 
@@ -98,12 +100,11 @@ class HandCalculator
             ];
         }
 
-        if ($this->isHighCard($cards)) {
-            return [
-                'hand' => Hands::HighCard->value,
-                'cards' => $this->mapCards([$this->getStrongestCardFromCards($cards)])
-            ];
-        }
+        // Se nenhuma mão especial for identificada, retorna carta alta
+        return [
+            'hand' => Hands::HighCard->value,
+            'cards' => $this->mapCards([$this->getStrongestCardFromCards($cards)])
+        ];
     }
 
     private function isHighCard(array $cards): bool
@@ -205,24 +206,51 @@ class HandCalculator
 
     private function isStraight(array $cards): bool
     {
-        $allCards = collect($cards);
-        $uniqueCardsCollection = $allCards->unique('carta');
-//        dd($uniqueCardsCollection);
-        if ($uniqueCardsCollection->count() < 5) {
+        $cardsCollection = collect($cards)->unique('carta')->sortBy('carta');
+        
+        // Se não tiver pelo menos 5 cartas diferentes, não é possível ter um straight
+        if ($cardsCollection->count() < 5) {
             return false;
         }
-
-        $actualValue = $uniqueCardsCollection->first()['carta'];
-        $uniqueCardsCollection->shift();
-
-        foreach ($uniqueCardsCollection as $uniqueCard) {
-            if ($uniqueCard['carta'] != $actualValue - 1) {
-                return false;
+        
+        // Verifica sequência normal
+        $consecCards = 1;
+        $maxConsecCards = 1;
+        $sortedCards = $cardsCollection->values()->toArray();
+        
+        for ($i = 1; $i < count($sortedCards); $i++) {
+            if ($sortedCards[$i]['carta'] == $sortedCards[$i-1]['carta'] + 1) {
+                $consecCards++;
+                $maxConsecCards = max($maxConsecCards, $consecCards);
+            } else if ($sortedCards[$i]['carta'] != $sortedCards[$i-1]['carta']) {
+                $consecCards = 1;
             }
-            $actualValue = $uniqueCard['carta'];
         }
-
-        return true;
+        
+        // Verifica o caso especial A-2-3-4-5 (Ás como 1)
+        $hasAce = $cardsCollection->contains(function ($card) {
+            return $card['carta'] == \App\Domains\Game\Cards\Enums\Card::Ace->value;
+        });
+        
+        $has2 = $cardsCollection->contains(function ($card) {
+            return $card['carta'] == 2;
+        });
+        
+        $has3 = $cardsCollection->contains(function ($card) {
+            return $card['carta'] == 3;
+        });
+        
+        $has4 = $cardsCollection->contains(function ($card) {
+            return $card['carta'] == 4;
+        });
+        
+        $has5 = $cardsCollection->contains(function ($card) {
+            return $card['carta'] == 5;
+        });
+        
+        $wheelStraight = $hasAce && $has2 && $has3 && $has4 && $has5;
+        
+        return $maxConsecCards >= 5 || $wheelStraight;
     }
 
     private function isFlush(array $cards): bool

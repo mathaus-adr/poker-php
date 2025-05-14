@@ -68,10 +68,10 @@ class HandComparator
             return $playerHandData['hand'];
         });
 
-        $groupedStrongestHandOriginalCollection = $groupedHands->sortBy(function ($group, $key) {
+        $groupedStrongestHandOriginalCollection = $groupedHands->sortByDesc(function ($group, $key) {
             return $key;
         });
-
+        
         $groupedStrongestHand = $groupedStrongestHandOriginalCollection->first();
 
         if ($groupedStrongestHand->count() > 1) {
