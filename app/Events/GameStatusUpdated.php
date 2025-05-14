@@ -23,10 +23,6 @@ class GameStatusUpdated implements ShouldBroadcast
     public function __construct(public int $id, public ?string $action = null)
     {
         $this->broadcastVia('pusher');
-        $room = Room::find($id);
-        $roomData = $room->data;
-        $this->currentPlayerTurnId = $roomData['current_player_to_bet']['id'] ?? null;
-        $this->lastPlayerFoldedId = $roomData['last_player_folded']['id'] ?? null;
     }
 
     /**

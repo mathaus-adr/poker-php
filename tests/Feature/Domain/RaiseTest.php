@@ -73,7 +73,6 @@ describe('raise action game action', function () {
         $round->refresh();
         $payAction = app(Pay::class);
 
-        //        dd($round->player_turn_id);
         $payAction->execute($round->room, User::find($round->player_turn_id));
         $this->assertDatabaseHas(RoomRound::class,
             ['total_players_in_round' => $totalPlayers, 'total_pot' => 60, 'current_bet_amount_to_join' => 25]);

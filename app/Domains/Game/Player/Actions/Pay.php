@@ -2,6 +2,7 @@
 
 namespace App\Domains\Game\Player\Actions;
 
+use App\Domains\Game\Player\Commands\RoundActions\PayCommand;
 use App\Domains\Game\PokerGameState;
 use App\Events\GameStatusUpdated;
 use App\Models\Room;
@@ -14,74 +15,13 @@ use Illuminate\Support\Facades\DB;
 
 class Pay
 {
-    public function __construct(private readonly PokerGameState $pokerGameState)
-    {
-    }
-
     public function execute(Room $room, User $user): void
     {
-        $this->pokerGameState->load($room->id, $user);
-
-        if (!$this->pokerGameState->isPlayerTurn($user->id)) {
-            return;
-        }
-        $round = $room->round;
-        $roundPlayer = $this->getRoundPlayer($round, $user);
-        $currentBetAmountToJoin = $round->current_bet_amount_to_join;
-        $totalRoundBetFromPlayer = $round->actions->where('user_id', $user->id)->sum('amount');
-        $totalCashToPay = $currentBetAmountToJoin - $totalRoundBetFromPlayer;
-        $this->storeRoundAction($user, $round, $totalCashToPay);
-        $this->setNextPlayerToPlay($round, $roundPlayer);
-        $this->subtractCashFromPlayer($room, $user, $totalCashToPay);
+        $payCommand = app(PayCommand::class, [
+            'user' => $user,
+            'room' => $room
+        ]);
+        $payCommand->execute();
     }
 
-    private function storeRoundAction(User $user, RoomRound $round, int $amount): void
-    {
-        RoundAction::create(
-            [
-                'room_round_id' => $round->id,
-                'user_id' => $user->id,
-                'amount' => $amount,
-                'action' => 'call',
-                'round_phase' => $round->phase
-            ]
-        );
-        $round->update(['total_pot' => DB::raw('total_pot + ' . $amount)]);
-    }
-
-    private function setNextPlayerToPlay(RoomRound $round, RoundPlayer $roundPlayer): void
-    {
-        $nextPlayerWithHighOrder = RoundPlayer::where('room_round_id', $round->id)
-            ->where('status', true)
-            ->where('order', '>', $roundPlayer->order)
-            ->first();
-
-        if ($nextPlayerWithHighOrder) {
-            $round->update(['player_turn_id' => $nextPlayerWithHighOrder->user_id]);
-            return;
-        }
-
-        $nextPlayerWithMinorOrder = RoundPlayer::where('room_round_id', $round->id)
-            ->where('status', true)->where('order', '>=', 1)->first();
-
-        if ($nextPlayerWithMinorOrder) {
-            $round->update(['player_turn_id' => $nextPlayerWithMinorOrder->user_id]);
-        }
-    }
-
-    private function getRoundPlayer(RoomRound $round, User $user): RoundPlayer
-    {
-        return RoundPlayer::where([
-            'room_round_id' => $round->id,
-            'user_id' => $user->id
-        ])->first();
-    }
-
-    private function subtractCashFromPlayer(Room $room, User $user, int $totalCashToPay): void
-    {
-        RoomUser::where([
-            'room_id' => $room->id,
-            'user_id' => $user->id
-        ])->update(['cash' => DB::raw('cash - ' . $totalCashToPay)]);
-    }
 }
