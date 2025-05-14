@@ -3,21 +3,32 @@
 namespace App\Domains\Game;
 
 use App\Domains\Game\Rules\GetHand;
-use App\Domains\Game\Rules\GetPlayerPossibleActions;
+use App\Domains\Game\States\EndState;
+use App\Domains\Game\States\FlopState;
+use App\Domains\Game\States\GameStateInterface;
+use App\Domains\Game\States\NotStartedState;
+use App\Domains\Game\States\PreFlopState;
+use App\Domains\Game\States\RiverState;
+use App\Domains\Game\States\TurnState;
+use App\Domains\Game\StartPokerGame;
 use App\Models\Room;
 use App\Models\RoundPlayer;
 use App\Models\User;
 use Illuminate\Support\Arr;
 use Carbon\Carbon;
+use App\Exceptions\InvalidStateException;
+use App\Domains\Game\Actions\ShowdownManager;
 
 class PokerGameState implements LoadGameStateInterface
 {
     private Room $roomModel;
     private ?User $user;
+    private GameStateInterface $currentState;
+    private StartPokerGame $startPokerGameService;
+    private ShowdownManager $showdownManager;
 
     // Dependencies for rules
     private GetHand $getHandService;
-    private GetPlayerPossibleActions $getPlayerPossibleActionsService;
 
     private array $player = [];
     private array $players = [];
@@ -44,10 +55,29 @@ class PokerGameState implements LoadGameStateInterface
     private array $roundActions = [];
 
     // Constructor to inject main dependencies
-    public function __construct(GetHand $getHand, GetPlayerPossibleActions $getPlayerPossibleActions)
-    {
+    public function __construct(
+        GetHand $getHand,
+        StartPokerGame $startPokerGameService,
+        ShowdownManager $showdownManager
+    ) {
         $this->getHandService = $getHand;
-        $this->getPlayerPossibleActionsService = $getPlayerPossibleActions;
+        $this->startPokerGameService = $startPokerGameService;
+        $this->showdownManager = $showdownManager;
+    }
+
+    public function setState(GameStateInterface $state): void
+    {
+        $this->currentState = $state;
+    }
+
+    public function getCurrentState(): GameStateInterface
+    {
+        return $this->currentState;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
     }
 
     public function load(int $roomId, ?User $user = null): PokerGameState
@@ -56,6 +86,7 @@ class PokerGameState implements LoadGameStateInterface
         $this->user = $user;
 
         $this->loadRoomAndRoundState();
+        $this->initializeState();
         $this->loadPlayersState();
 
         if ($this->user) {
@@ -67,6 +98,39 @@ class PokerGameState implements LoadGameStateInterface
         return $this;
     }
 
+    private function initializeState(): void
+    {
+        if (!$this->gameStarted || is_null($this->roomModel->round)) {
+            $this->setState(new NotStartedState());
+            return;
+        }
+
+        $phase = $this->roomModel->round->phase;
+        switch ($phase) {
+            case 'pre_flop':
+                $this->setState(new PreFlopState());
+                break;
+            case 'flop':
+                $this->setState(new FlopState());
+                break;
+            case 'turn':
+                $this->setState(new TurnState());
+                break;
+            case 'river':
+                $this->setState(new RiverState());
+                break;
+            case 'end':
+                $endState = new EndState($this->showdownManager);
+                $this->setState($endState);
+                if (method_exists($endState, 'onEnterState')) {
+                    $endState->onEnterState($this);
+                }
+                break;
+            default:
+                throw new InvalidStateException("Fase do jogo desconhecida ou inválida: {$phase}");
+        }
+    }
+
     private function loadRoomAndRoundState(): void
     {
         $round = $this->roomModel->round;
@@ -76,14 +140,21 @@ class PokerGameState implements LoadGameStateInterface
         $this->lastPlayerFolded = $roomData['last_player_folded'] ?? null;
         $this->roundActions = $round?->actions?->toArray() ?? [];
 
-        if ($this->gameStarted) {
+        if ($this->gameStarted && $round) {
             $this->playerTurnId = $round->player_turn_id ?? null;
-            $this->flop = Arr::get($roomData, 'cards.flop');
-            $this->turn = Arr::get($roomData, 'cards.turn');
-            $this->river = Arr::get($roomData, 'cards.river');
+            $this->flop = Arr::get($roomData, 'flop');
+            $this->turn = Arr::get($roomData, 'turn');
+            $this->river = Arr::get($roomData, 'river');
             $this->totalBetToJoin = $round->current_bet_amount_to_join ?? 0;
             $this->totalPot = $round->total_pot ?? 0;
             $this->isShowDown = $round->phase === 'end';
+        } else {
+            $this->flop = null;
+            $this->turn = null;
+            $this->river = null;
+            $this->totalBetToJoin = 0;
+            $this->totalPot = 0;
+            $this->isShowDown = false;
         }
     }
 
@@ -101,16 +172,20 @@ class PokerGameState implements LoadGameStateInterface
 
         if (empty($this->player)) return;
 
-        if ($this->gameStarted) {
+        if ($this->gameStarted && isset($this->currentState)) {
             $this->playerCards = Arr::get($this->player, 'user_info.cards', []);
             $this->playerHand = $this->getHandService->getHand($this->getAllPlayerCards());
             $this->playerTotalCash = $this->getPlayerTotalCash();
             $this->playerActualBet = $this->getPlayerActualBet();
             
-            $this->playerActions = $this->getPlayerPossibleActionsService->getActionsForPlayer(
-                $this->roomModel,
-                $this->user
-            );
+            $this->playerActions = $this->currentState->getPossibleActions($this, $this->user);
+        } else {
+            $this->playerCards = [];
+            $this->playerHand = [];
+            $this->playerActions = [];
+            if (isset($this->currentState)) {
+                 $this->playerActions = $this->currentState->getPossibleActions($this, $this->user);
+            }
         }
     }
 
@@ -191,6 +266,12 @@ class PokerGameState implements LoadGameStateInterface
 
     public function getPlayerActions(): ?array
     {
+        if (!$this->user || !isset($this->currentState)) {
+            if (isset($this->currentState) && $this->user) {
+                return $this->currentState->getPossibleActions($this, $this->user);
+            }
+            return [];
+        }
         return $this->playerActions;
     }
 
@@ -224,11 +305,6 @@ class PokerGameState implements LoadGameStateInterface
 
     public function loadFromArray(array $data): PokerGameState
     {
-        // Note: This method is primarily for Livewire hydration.
-        // The $roomModel and $user properties are not part of the dehydrated data, 
-        // as they are expected to be re-loaded or handled differently in a typical Livewire component lifecycle.
-        // If they were needed, the dehydration/hydration process would be more complex.
-
         $this->player = $data['player'] ?? [];
         $this->players = $data['players'] ?? [];
         $this->playerCards = $data['playerCards'] ?? [];
@@ -243,24 +319,32 @@ class PokerGameState implements LoadGameStateInterface
         $this->playerTotalCash = $data['playerTotalCash'] ?? null;
         $this->playerActualBet = $data['playerActualBet'] ?? null;
         $this->totalPot = $data['totalPot'] ?? 0;
-        // $this->totalBetToJoin is not in dehydrate, set to default or calculate if needed
-        // $this->isShowDown is not in dehydrate
-        // $this->lastPlayerFolded is not in dehydrate
-        // $this->countdown is not in dehydrate (and typically dynamically calculated)
-        // $this->playerTurnId is not explicitly in dehydrate, but part of playerTurn
-        // $this->roundActions is not in dehydrate
+        $this->totalBetToJoin = $data['totalBetToJoin'] ?? 0;
+        $this->isShowDown = $data['isShowDown'] ?? false;
+        $this->lastPlayerFolded = $data['lastPlayerFolded'] ?? null;
+        $this->playerTurnId = $data['playerTurnId'] ?? ($this->playerTurn['user_id'] ?? null);
 
-        // Potentially re-derive some state if necessary based on hydrated data,
-        // for example, playerTurnId from playerTurn:
-        if ($this->playerTurn) {
-            $this->playerTurnId = $this->playerTurn['user_id'] ?? null;
+        if ($this->gameStarted && isset($data['phase'])) {
+            $newState = match ($data['phase']) {
+                'pre_flop' => new PreFlopState(),
+                'flop'     => new FlopState(),
+                'turn'     => new TurnState(),
+                'river'    => new RiverState(),
+                'end'      => new EndState($this->showdownManager),
+                default    => new NotStartedState(),
+            };
+            $this->setState($newState);
+            if ($newState instanceof EndState && method_exists($newState, 'onEnterState')) {
+                $newState->onEnterState($this);
+            }
+        } else {
+            $this->setState(new NotStartedState());
         }
-        
-        // Note: Properties like $roomModel, $user, $totalBetToJoin, $isShowDown, $lastPlayerFolded, $countdown, $roundActions
-        // are NOT part of the dehydrated data. If a fully functional PokerGameState is needed after hydration
-        // without calling load(), these would need to be handled, potentially by including them in dehydration
-        // or by having the Livewire component re-trigger a full load if necessary.
-        // For now, this makes the hydrated state consistent with dehydrated state.
+
+        $this->playerActions = $data['playerActions'] ?? [];
+        if ($this->user && isset($this->currentState)) {
+            $this->playerActions = $this->currentState->getPossibleActions($this, $this->user);
+        }
 
         return $this;
     }
@@ -370,5 +454,39 @@ class PokerGameState implements LoadGameStateInterface
     public function getTotalBetToJoin(): int
     {
         return $this->totalBetToJoin;
+    }
+
+    public function handlePlayerAction(string $action, array $data = []): void
+    {
+        if (!isset($this->currentState)) {
+            throw new InvalidStateException("O estado do jogo não foi inicializado.");
+        }
+        $this->currentState->handleAction($this, $action, $data);
+
+        $this->playerActions = $this->currentState->getPossibleActions($this, $this->user);
+    }
+
+    public function advanceGamePhase(): void
+    {
+        if (!isset($this->currentState)) {
+            throw new InvalidStateException("O estado do jogo não foi inicializado.");
+        }
+        $this->currentState->transitionToNextState($this);
+        if ($this->user) {
+            $this->playerActions = $this->currentState->getPossibleActions($this, $this->user);
+        }
+    }
+
+    public function getStartPokerGameService(): StartPokerGame
+    {
+        return $this->startPokerGameService;
+    }
+
+    /**
+     * Retorna uma instância de EndState devidamente configurada com ShowdownManager.
+     */
+    public function getManagedEndState(): EndState
+    {
+        return new EndState($this->showdownManager);
     }
 }
