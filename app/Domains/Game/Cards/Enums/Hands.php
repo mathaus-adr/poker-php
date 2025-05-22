@@ -2,18 +2,18 @@
 
 namespace App\Domains\Game\Cards\Enums;
 
-enum Hands: int implements Stringable
+enum Hands: int
 {
-    case RoyalFlush = 1;
-    case StraightFlush = 2;
-    case FourOfAKind = 3;
-    case FullHouse = 4;
+    case HighCard = 0;
+    case OnePair = 1;
+    case TwoPair = 2;
+    case ThreeOfAKind = 3;
+    case Straight = 4;
     case Flush = 5;
-    case Straight = 6;
-    case ThreeOfAKind = 7;
-    case TwoPair = 8;
-    case OnePair = 9;
-    case HighCard = 10;
+    case FullHouse = 6;
+    case FourOfAKind = 7;
+    case StraightFlush = 8;
+    case RoyalFlush = 9;
 
     public static function get(int|string $value): string
     {

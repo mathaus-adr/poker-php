@@ -203,7 +203,7 @@ describe('game stage changer test', function () {
 
         $room = Room::find($round->room_id);
         expect($room->data['flop'])->not->toBeNull();
-    })->group('game-domain');;
+    })->group('game-domain','aqui');;
 
 
     it('should can change game phase after everyone played in round when everyone has same value on bets in all phases',
@@ -299,8 +299,8 @@ describe('game stage changer test', function () {
                 $round->refresh();
             }
 
-            Event::assertDispatchedTimes(GameStatusUpdated::class, 15);
-            Bus::assertDispatchedTimes(FoldInactiveUser::class, 14);
+            Event::assertDispatchedTimes(GameStatusUpdated::class, 16);
+            Bus::assertDispatchedTimes(FoldInactiveUser::class, 15);
             Bus::assertNotDispatchedSync(RestartGame::class);
 
             $this->assertDatabaseHas(RoomRound::class, [

@@ -2,7 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Domains\Game\Player\Actions\Fold;
+use App\Domains\Game\Player\Actions\PlayerActionFactory;
+use App\Domains\Game\PokerGameState;
 use App\Models\RoomRound;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
@@ -26,10 +27,16 @@ class FoldInactiveUser implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(Fold $fold): void
+    public function handle(PokerGameState $pokerGameState): void
     {
         if ($this->roomRound->play_identifier === $this->uuid && $this->roomRound->player_turn_id === $this->playerTurnId) {
-            $fold->fold($this->roomRound->room, User::find($this->playerTurnId));
+            $user = User::find($this->playerTurnId);
+            
+            if ($user) {
+                $pokerGameState->load($this->roomRound->room_id, $user);
+                $foldAction = PlayerActionFactory::createAction('fold', $pokerGameState);
+                $foldAction->execute($this->roomRound->room, $user);
+            }
         }
     }
 }
