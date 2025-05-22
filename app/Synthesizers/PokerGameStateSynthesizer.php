@@ -38,10 +38,8 @@ class PokerGameStateSynthesizer extends Synth
 
     public function hydrate($value)
     {
-        // Instantiate PokerGameState using the service container to resolve constructor dependencies
-        $pokerGameState = app(PokerGameState::class);
-        // The $value passed here is the first element of the array returned by dehydrate
-        $pokerGameState->loadFromArray($value); 
+        $pokerGameState = new PokerGameState;
+        $pokerGameState->loadFromArray($value);
         return $pokerGameState;
     }
 

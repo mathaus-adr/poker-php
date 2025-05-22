@@ -17,7 +17,6 @@ return new class extends Migration {
             $table->json('user_info')->nullable();
             $table->integer('order');
             $table->timestamps();
-            $table->unique(['user_id', 'room_round_id']);
             $table->index(['user_id', 'room_round_id', 'status']);
         });
     }
